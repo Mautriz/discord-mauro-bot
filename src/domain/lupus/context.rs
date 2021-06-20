@@ -1,7 +1,10 @@
+use std::collections::HashSet;
 use std::{collections::HashMap, sync::Arc};
 
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+
+use super::roles::{LupusCommand, LupusRole};
 
 #[derive(Clone)]
 pub struct LupusCtx {
@@ -19,21 +22,30 @@ impl LupusCtx {
         }
     }
 
-    fn add_user(&mut self, player_id: UserId) {}
+    async fn add_user(&self, guild_id: &GuildId, player_id: UserId) {
+        if let Some(game) = self.games.get(&guild_id) {
+            let mut game_writer = game.write().await;
+            game_writer.joined_players.insert(player_id);
+        }
+    }
 
-    fn get_game(&self, guild_id: GuildId) {}
+    async fn remove_user(&self, guild_id: &GuildId, player_id: &UserId) {
+        if let Some(game) = self.games.get(&guild_id) {
+            let mut game_writer = game.write().await;
+            game_writer.joined_players.remove(player_id);
+        }
+    }
+
+    fn get_game(&self, guild_id: &GuildId) -> Option<&Arc<RwLock<LupusGame>>> {
+        self.games.get(&guild_id)
+    }
 }
-
-#[derive(Clone)]
-pub enum Role {}
-
-#[derive(Clone)]
-pub enum Actions {}
 
 #[derive(Clone, Default)]
 struct LupusGame {
-    action_buffer: Vec<Actions>,
-    player_list: Vec<UserId>,
+    command_buffer: Vec<LupusCommand>,
+    joined_players: HashSet<UserId>,
+    time: LupusTime,
 }
 
 impl LupusGame {
@@ -42,4 +54,30 @@ impl LupusGame {
             ..Default::default()
         }
     }
+
+    fn process_commands(&mut self) {
+        // self.command_buffer
+    }
+}
+#[derive(Clone)]
+struct LupusDay {}
+#[derive(Clone)]
+struct LupusNight {}
+
+#[derive(Clone)]
+enum LupusTime {
+    Day(LupusDay),
+    Night(LupusNight),
+}
+
+impl Default for LupusTime {
+    fn default() -> Self {
+        LupusTime::Day(LupusDay {})
+    }
+}
+
+struct LupusPlayer {
+    role: LupusRole,
+    user_id: UserId,
+    is_alive: bool,
 }
