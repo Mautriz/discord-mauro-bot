@@ -18,7 +18,7 @@ use serenity::model::id::UserId;
 // ANGELO: visto buono; il master da lui un nome; lui vince se la persona che gli è stata affidata vince; è neutrale; se la persona che gli è stata affidata muore, il suo obiettivo sarà quello di rimane in vita fino alla fine
 // AMNESIA: inizialmente visto buono; targetta uno morto, UNA VOLTA a partita decide un morto di cui prenderà il ruolo; se il ruolo della persona scelta è buono, rimane buono, se il ruolo è cattivo, diventa cattivo
 // VILLICO: visto buono, non fa niente
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum LupusRole {
     VEGGENTE,
     CRICETO,
@@ -47,7 +47,7 @@ pub enum Nature {
 }
 
 impl LupusRole {
-    fn is_evil(self) -> Nature {
+    pub fn get_nature(&self) -> Nature {
         match self {
             Self::VEGGENTE
             | Self::ANGELO
@@ -72,15 +72,16 @@ impl Default for LupusRole {
     }
 }
 
-#[derive(Clone)]
-pub enum LupusCommand {
+#[derive(Clone, Debug)]
+pub enum LupusNightCommand {
     RoleBlock { user_id: UserId },
     Frame { user_id: UserId },
-    GiveQuadro { user_id: UserId },
+    GivePicture { user_id: UserId },
+    Protect { user_id: UserId },
     Kill { user_id: UserId },
     // WolfVote {  }
     TrueSight { user_id: UserId },
     Heal { user_id: UserId },
     Remember { user_id: UserId },
-    Possess { user_id: UserId },
+    // Possess { user_id: UserId },
 }

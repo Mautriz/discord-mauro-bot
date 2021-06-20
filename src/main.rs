@@ -1,13 +1,3 @@
-//! Requires the 'framework' feature flag be enabled in your project's
-//! `Cargo.toml`.
-//!
-//! This can be enabled by specifying the feature in the dependency section:
-//!
-//! ```toml
-//! [dependencies.serenity]
-//! git = "https://github.com/serenity-rs/serenity.git"
-//! features = ["framework", "standard_framework"]
-//! ```
 mod commands;
 mod domain;
 
@@ -32,6 +22,8 @@ use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use commands::{invito::*, lupus::*, ping::*, random::*};
+
+use crate::domain::lupus::context::{LupusCtx, LupusManager};
 
 pub struct ShardManagerContainer;
 
@@ -116,6 +108,7 @@ async fn main() {
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(client.shard_manager.clone());
+        data.insert::<LupusCtx>(LupusManager::new());
     }
 
     let shard_manager = client.shard_manager.clone();
