@@ -78,8 +78,9 @@ pub enum LupusNightCommand {
     Frame { user_id: UserId },
     GivePicture { user_id: UserId },
     Protect { user_id: UserId },
+
     Kill { user_id: UserId },
-    // WolfVote {  }
+    WolfVote { user_id: UserId },
     TrueSight { user_id: UserId },
     Heal { user_id: UserId },
     Remember { user_id: UserId },
