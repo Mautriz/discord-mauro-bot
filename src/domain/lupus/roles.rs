@@ -18,11 +18,11 @@ use serenity::model::id::UserId;
 // ANGELO: visto buono; il master da lui un nome; lui vince se la persona che gli è stata affidata vince; è neutrale; se la persona che gli è stata affidata muore, il suo obiettivo sarà quello di rimane in vita fino alla fine
 // AMNESIA: inizialmente visto buono; targetta uno morto, UNA VOLTA a partita decide un morto di cui prenderà il ruolo; se il ruolo della persona scelta è buono, rimane buono, se il ruolo è cattivo, diventa cattivo
 // VILLICO: visto buono, non fa niente
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Debug)]
 pub enum LupusRole {
     VEGGENTE,
     CRICETO,
-    BODYGUARD,
+    BODYGUARD { self_protected: bool },
     VIGILANTE,
     MEDIUM,
     GUFO,
@@ -52,7 +52,7 @@ impl LupusRole {
             Self::VEGGENTE
             | Self::ANGELO
             | Self::CRICETO
-            | Self::BODYGUARD
+            | Self::BODYGUARD { .. }
             | Self::VIGILANTE
             | Self::MEDIUM
             | Self::DORIAN_GREY
@@ -72,17 +72,16 @@ impl Default for LupusRole {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum LupusNightCommand {
-    RoleBlock { user_id: UserId },
-    Frame { user_id: UserId },
-    GivePicture { user_id: UserId },
-    Protect { user_id: UserId },
-
-    Kill { user_id: UserId },
-    WolfVote { user_id: UserId },
-    TrueSight { user_id: UserId },
-    Heal { user_id: UserId },
-    Remember { user_id: UserId },
-    // Possess { user_id: UserId },
+#[derive(Clone, Debug, PartialOrd, PartialEq)]
+pub enum LupusAction {
+    RoleBlock(UserId),
+    Frame(UserId),
+    GivePicture(UserId),
+    Protect(UserId),
+    SelfProtect,
+    Kill(UserId),
+    WolfVote(UserId),
+    TrueSight(UserId),
+    Heal(UserId),
+    Remember(UserId),
 }

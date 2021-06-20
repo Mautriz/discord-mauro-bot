@@ -21,7 +21,7 @@ use std::{collections::HashSet, env, sync::Arc};
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use commands::{invito::*, lupus::*, ping::*, random::*};
+use commands::{invito::*, lupus::*, ping::*, random::*, vote::*};
 
 use crate::domain::lupus::context::{LupusCtx, LupusManager};
 
@@ -58,7 +58,7 @@ async fn my_help(
 }
 
 #[group]
-#[commands(ping, invito, random)]
+#[commands(ping, invito, random, vote)]
 struct General;
 
 #[tokio::main]

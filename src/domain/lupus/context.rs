@@ -4,7 +4,8 @@ use std::{collections::HashMap, sync::Arc};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-use super::roles::{LupusNightCommand, LupusRole, Nature};
+use super::roles::{LupusAction, LupusRole, Nature};
+use super::roles_per_players;
 
 pub struct LupusCtx {}
 
@@ -55,11 +56,24 @@ impl LupusManager {
     pub fn get_game(&self, guild_id: &GuildId) -> Option<&Arc<RwLock<LupusGame>>> {
         self.games.get(&guild_id)
     }
+
+    pub async fn start_game(&self, guild_id: &GuildId) {
+        if let Some(game) = self.games.get(&guild_id) {
+            let mut game_writer = game.write().await;
+            let player_num = game_writer.joined_players.len();
+            let mut rng_roles = roles_per_players::get_roles(player_num);
+            for (_, player) in game_writer.joined_players.iter_mut() {
+                if let Some(role) = rng_roles.pop() {
+                    player.role = role;
+                }
+            }
+        }
+    }
 }
 
 #[derive(Clone, Default, Debug)]
 pub struct LupusGame {
-    command_buffer: Vec<LupusNightCommand>,
+    action_buffer: Vec<(UserId, LupusAction)>,
     joined_players: HashMap<UserId, LupusPlayer>,
 }
 
@@ -70,8 +84,12 @@ impl LupusGame {
         }
     }
 
-    fn process_command(&mut self, cmd: LupusNightCommand) {
-        match cmd {
+    fn push_action(&mut self, user_id: UserId, cmd: LupusAction) {
+        self.action_buffer.push((user_id, cmd))
+    }
+
+    fn process_action(&mut self, action: (UserId, LupusAction)) {
+        match action.1 {
             _ => (),
         }
     }

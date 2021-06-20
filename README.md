@@ -18,3 +18,10 @@ It loads env variables from an .env file at the project root
 
 The file should contain:
 - DISCORD_TOKEN (the token in the bot page of the discord developer portal)
+
+
+
+### Todo
+
+- Processare messaggi
+- Ricavare GuildId dell'utente dalla mappa globale nel lupus ctx
