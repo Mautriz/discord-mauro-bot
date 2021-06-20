@@ -9,6 +9,7 @@
 //! features = ["framework", "standard_framework"]
 //! ```
 mod commands;
+mod domain;
 
 use serenity::{
     async_trait,
@@ -30,7 +31,7 @@ use std::{collections::HashSet, env, sync::Arc};
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use commands::{invito::*, ping::*};
+use commands::{invito::*, lupus::*, ping::*, random::*};
 
 pub struct ShardManagerContainer;
 
@@ -65,7 +66,7 @@ async fn my_help(
 }
 
 #[group]
-#[commands(ping, invito)]
+#[commands(ping, invito, random)]
 struct General;
 
 #[tokio::main]
@@ -103,7 +104,8 @@ async fn main() {
     let framework = StandardFramework::new()
         .configure(|c| c.owners(owners).prefix("mauro "))
         .help(&MY_HELP)
-        .group(&GENERAL_GROUP);
+        .group(&GENERAL_GROUP)
+        .group(&LUPUS_GROUP);
 
     let mut client = Client::builder(&token)
         .framework(framework)

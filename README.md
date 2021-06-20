@@ -5,6 +5,9 @@ It's purpose is just to understand discords bots functionality, learn rust a lit
 
 ### Functionality
 
-The only functionality atm is create temporary invite links for the discord with the command `mauro invite`
+- `invite`: create an invite link that works only for 10 minutes and is temporary (when the user logs out, it automatically kicked)
+The only functionality atm is create temporary invite links for the discord with the command `invite`
+- `random`: create a random int from the user input, takes 2 integers
+- `lupus`: a group of commands (wip) to manage a lupus game
 
 

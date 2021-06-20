@@ -4,6 +4,9 @@ use serenity::prelude::*;
 
 #[command]
 pub async fn ping(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
-    let _ = msg.reply(&ctx.http, format!("")).await;
+    let _ = msg
+        .channel_id
+        .say(&ctx.http, format!("Sono vivo o_O"))
+        .await;
     Ok(())
 }
