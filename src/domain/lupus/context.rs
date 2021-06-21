@@ -1,11 +1,11 @@
-use std::collections::HashSet;
+use std::fmt::format;
 use std::{collections::HashMap, sync::Arc};
-
-use serenity::model::prelude::*;
-use serenity::prelude::*;
 
 use super::roles::{LupusAction, LupusRole, Nature};
 use super::roles_per_players;
+use serenity::model::prelude::*;
+use serenity::prelude::*;
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 
 pub struct LupusCtx {}
 
@@ -27,13 +27,17 @@ impl LupusManager {
         }))
     }
 
-    pub fn create_game(&mut self, guild_id: GuildId) -> String {
+    pub fn create_game(&mut self, guild_id: GuildId) -> Result<Receiver<GameMessage>, String> {
         if self.games.contains_key(&guild_id) {
-            format!("There's a game already in progress: {:?}", guild_id)
+            Err(format!(
+                "There's a game already in progress: {:?}",
+                guild_id
+            ))
         } else {
-            let game = Arc::new(RwLock::new(LupusGame::new()));
+            let (tx, rx) = channel::<GameMessage>(10);
+            let game = Arc::new(RwLock::new(LupusGame::new(tx)));
             self.games.insert(guild_id, game);
-            format!("Game created successfully")
+            Ok(rx)
         }
     }
 
@@ -71,18 +75,48 @@ impl LupusManager {
     }
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone)]
+pub enum GameMessage {
+    NIGHTEND,
+    DAYEND,
+}
+
+#[derive(Debug)]
 pub struct LupusGame {
     action_buffer: Vec<(UserId, LupusAction)>,
     joined_players: HashMap<UserId, LupusPlayer>,
+    message_sender: Sender<GameMessage>,
 }
 
 impl LupusGame {
-    fn new() -> Self {
+    fn new(tx: Sender<GameMessage>) -> Self {
+        let game_channel = channel::<GameMessage>(10);
+
         Self {
-            ..Default::default()
+            message_sender: tx,
+            action_buffer: vec![],
+            joined_players: HashMap::new(),
         }
     }
+
+    // async fn handle_game(
+    //     ctx: &'static LupusManager,
+    //     guild_id: &GuildId,
+    //     rx: &Receiver<GameMessage>,
+    // ) -> String {
+    //     match ctx.get_game(guild_id) {
+    //         Some(game) => {
+    //             let read_game = game.read().await;
+    //             tokio::spawn(async move { read_game.handle_night(rx).await });
+    //             format!("Game handling started for game {:?}", guild_id)
+    //         }
+    //         None => format!("Game not found"),
+    //     }
+    // }
+
+    async fn handle_night(&self, rx: &Receiver<GameMessage>) {}
+
+    async fn handle_day(&self, rx: &Receiver<GameMessage>) {}
 
     fn push_action(&mut self, user_id: UserId, cmd: LupusAction) {
         self.action_buffer.push((user_id, cmd))
@@ -119,12 +153,12 @@ impl LupusPlayer {
             framed: false,
             role_blocked: false,
             has_painting: false,
-            special_role: LupusRole::NOT_ASSIGNED,
+            special_role: LupusRole::NOTASSIGNED,
         }
     }
 
     fn get_nature(&self) -> Nature {
-        if self.special_role != LupusRole::NOT_ASSIGNED {
+        if self.special_role != LupusRole::NOTASSIGNED {
             self.special_role.get_nature()
         } else {
             self.role.get_nature()

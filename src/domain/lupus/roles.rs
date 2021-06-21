@@ -26,10 +26,10 @@ pub enum LupusRole {
     VIGILANTE,
     MEDIUM,
     GUFO,
-    DORIAN_GREY,
-    VILLICO_MANNARO,
+    DORIANGREY,
+    VILLICOMANNARO,
     PUTTANA,
-    SERIAL_KILLER,
+    SERIALKILLER,
     DOTTORE,
     INDEMONIATO,
     STREGA,
@@ -37,7 +37,7 @@ pub enum LupusRole {
     AMNESIA,
     VILLICO,
     WOLF,
-    NOT_ASSIGNED,
+    NOTASSIGNED,
 }
 
 pub enum Nature {
@@ -55,12 +55,12 @@ impl LupusRole {
             | Self::BODYGUARD { .. }
             | Self::VIGILANTE
             | Self::MEDIUM
-            | Self::DORIAN_GREY
+            | Self::DORIANGREY
             | Self::VILLICO
             | Self::PUTTANA
             | Self::DOTTORE
             | Self::INDEMONIATO => Nature::GOOD,
-            Self::WOLF | Self::SERIAL_KILLER | Self::VILLICO_MANNARO | Self::GUFO => Nature::EVIL,
+            Self::WOLF | Self::SERIALKILLER | Self::VILLICOMANNARO | Self::GUFO => Nature::EVIL,
             _ => Nature::UNKNOWN,
         }
     }
@@ -68,7 +68,7 @@ impl LupusRole {
 
 impl Default for LupusRole {
     fn default() -> Self {
-        LupusRole::NOT_ASSIGNED
+        LupusRole::NOTASSIGNED
     }
 }
 

@@ -14,15 +14,15 @@ pub async fn stats(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResu
         let lupus_lock = data.get::<LupusCtx>().unwrap().read().await;
         match lupus_lock.get_game(&guild_id) {
             Some(game) => {
-                let game_owned = game.read().await.clone();
-                Some(game_owned)
+                let game_owned = game.read().await;
+                Some(format!("{:?}", game_owned))
             }
             _ => None,
         }
     };
 
     if let Some(game) = lupus_game {
-        msg.channel_id.say(&ctx.http, format!("{:?}", game)).await?;
+        msg.channel_id.say(&ctx.http, game).await?;
     } else {
         msg.channel_id
             .say(&ctx.http, format!("Game non trovato"))
