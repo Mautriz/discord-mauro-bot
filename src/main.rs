@@ -1,4 +1,5 @@
 mod commands;
+mod consts;
 mod domain;
 
 use serenity::{

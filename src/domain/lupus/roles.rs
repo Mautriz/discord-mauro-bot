@@ -32,7 +32,7 @@ pub enum LupusRole {
     SERIALKILLER,
     DOTTORE,
     INDEMONIATO,
-    STREGA,
+    STREGA(Box<LupusRole>),
     ANGELO,
     AMNESIA,
     VILLICO,

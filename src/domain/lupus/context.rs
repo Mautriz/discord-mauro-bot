@@ -1,4 +1,3 @@
-use std::fmt::format;
 use std::{collections::HashMap, sync::Arc};
 
 use super::roles::{LupusAction, LupusRole, Nature};
@@ -27,8 +26,8 @@ impl LupusManager {
         }))
     }
 
-    pub fn create_game(&mut self, guild_id: GuildId) -> Result<Receiver<GameMessage>, String> {
-        if self.games.contains_key(&guild_id) {
+    pub fn create_game(&mut self, guild_id: &GuildId) -> Result<Receiver<GameMessage>, String> {
+        if self.games.contains_key(guild_id) {
             Err(format!(
                 "There's a game already in progress: {:?}",
                 guild_id
@@ -36,7 +35,7 @@ impl LupusManager {
         } else {
             let (tx, rx) = channel::<GameMessage>(10);
             let game = Arc::new(RwLock::new(LupusGame::new(tx)));
-            self.games.insert(guild_id, game);
+            self.games.insert(guild_id.to_owned(), game);
             Ok(rx)
         }
     }
@@ -73,6 +72,25 @@ impl LupusManager {
             }
         }
     }
+
+    pub async fn handle_game(&self, guild_id: &GuildId, rx: &mut Receiver<GameMessage>) {
+        match self.get_game(guild_id) {
+            Some(game) => {
+                let read_game = game.read().await;
+                format!("Game handling started for game {:?}", guild_id);
+
+                while let Some(msg) = rx.recv().await {
+                    match msg {
+                        GameMessage::DAYEND => {
+                            read_game.handle_night(rx).await;
+                        }
+                        GameMessage::NIGHTEND => read_game.handle_day(rx).await,
+                    };
+                }
+            }
+            None => (),
+        };
+    }
 }
 
 #[derive(Clone)]
@@ -90,8 +108,6 @@ pub struct LupusGame {
 
 impl LupusGame {
     fn new(tx: Sender<GameMessage>) -> Self {
-        let game_channel = channel::<GameMessage>(10);
-
         Self {
             message_sender: tx,
             action_buffer: vec![],
@@ -99,26 +115,11 @@ impl LupusGame {
         }
     }
 
-    // async fn handle_game(
-    //     ctx: &'static LupusManager,
-    //     guild_id: &GuildId,
-    //     rx: &Receiver<GameMessage>,
-    // ) -> String {
-    //     match ctx.get_game(guild_id) {
-    //         Some(game) => {
-    //             let read_game = game.read().await;
-    //             tokio::spawn(async move { read_game.handle_night(rx).await });
-    //             format!("Game handling started for game {:?}", guild_id)
-    //         }
-    //         None => format!("Game not found"),
-    //     }
-    // }
+    async fn handle_night(&self, rx: &mut Receiver<GameMessage>) {}
 
-    async fn handle_night(&self, rx: &Receiver<GameMessage>) {}
+    async fn handle_day(&self, rx: &mut Receiver<GameMessage>) {}
 
-    async fn handle_day(&self, rx: &Receiver<GameMessage>) {}
-
-    fn push_action(&mut self, user_id: UserId, cmd: LupusAction) {
+    pub fn push_action(&mut self, user_id: UserId, cmd: LupusAction) {
         self.action_buffer.push((user_id, cmd))
     }
 
@@ -127,6 +128,8 @@ impl LupusGame {
             _ => (),
         }
     }
+
+    fn cleanup() {}
 }
 
 #[derive(Clone, Debug)]
@@ -137,7 +140,6 @@ struct LupusPlayer {
     role_blocked: bool,
     is_protected: bool,
     has_painting: bool,
-    special_role: LupusRole,
 }
 
 enum KillError {
@@ -153,16 +155,11 @@ impl LupusPlayer {
             framed: false,
             role_blocked: false,
             has_painting: false,
-            special_role: LupusRole::NOTASSIGNED,
         }
     }
 
     fn get_nature(&self) -> Nature {
-        if self.special_role != LupusRole::NOTASSIGNED {
-            self.special_role.get_nature()
-        } else {
-            self.role.get_nature()
-        }
+        self.role.get_nature()
     }
 
     fn kill(&mut self) -> Result<(), KillError> {
@@ -175,5 +172,12 @@ impl LupusPlayer {
                 Ok(())
             }
         }
+    }
+
+    fn cleanup(&mut self) {
+        self.framed = false;
+        self.has_painting = false;
+        self.is_protected = false;
+        self.role_blocked = false;
     }
 }

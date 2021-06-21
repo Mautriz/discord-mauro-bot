@@ -14,7 +14,7 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
         LupusRole::MEDIUM,
         LupusRole::VILLICO,
         LupusRole::VILLICO,
-        LupusRole::STREGA,
+        LupusRole::STREGA(Box::new(LupusRole::NOTASSIGNED)),
         LupusRole::INDEMONIATO,
         LupusRole::VIGILANTE,
         LupusRole::DORIANGREY,

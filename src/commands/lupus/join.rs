@@ -2,7 +2,7 @@ use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-use crate::domain::lupus::context::LupusCtx;
+use crate::domain::lupus::context_ext::LupusHelpers;
 
 #[command]
 pub async fn join(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
@@ -12,7 +12,7 @@ pub async fn join(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResul
     {
         let data = ctx.data.read().await;
         // Unwrap is always safe, as LupusCtx is defined in the general context of the main application
-        let lupus_ctx = data.get::<LupusCtx>().unwrap().read().await;
+        let lupus_ctx = data.lupus().await;
         lupus_ctx.add_user(&guild_id, &user_id).await
     };
 
