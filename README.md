@@ -24,4 +24,5 @@ The file should contain:
 ### Todo
 
 - Processare messaggi
+- Spawnare un game handler per game che gestisce timer, turni e fine game (ancora da capire come fare, forse handler globale con mscp)
 - Ricavare GuildId dell'utente dalla mappa globale nel lupus ctx
