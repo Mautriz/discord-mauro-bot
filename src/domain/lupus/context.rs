@@ -123,6 +123,13 @@ impl LupusGame {
         self.action_buffer.push((user_id, cmd))
     }
 
+    fn process_actions(&mut self) {
+        self.action_buffer.sort_by_key(|a| a.1);
+        self.action_buffer
+            .into_iter()
+            .for_each(|tuple| self.process_action(tuple));
+    }
+
     fn process_action(&mut self, action: (UserId, LupusAction)) {
         match action.1 {
             _ => (),

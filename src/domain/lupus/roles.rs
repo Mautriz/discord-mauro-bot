@@ -27,14 +27,14 @@ pub enum LupusRole {
     MEDIUM,
     GUFO,
     DORIANGREY,
-    VILLICOMANNARO,
+    // VILLICOMANNARO,
     PUTTANA,
     SERIALKILLER,
     DOTTORE,
     INDEMONIATO,
     STREGA(Box<LupusRole>),
-    ANGELO,
-    AMNESIA,
+    // ANGELO,
+    // AMNESIA,
     VILLICO,
     WOLF,
     NOTASSIGNED,
@@ -50,7 +50,7 @@ impl LupusRole {
     pub fn get_nature(&self) -> Nature {
         match self {
             Self::VEGGENTE
-            | Self::ANGELO
+            // | Self::ANGELO
             | Self::CRICETO
             | Self::BODYGUARD { .. }
             | Self::VIGILANTE
@@ -60,7 +60,7 @@ impl LupusRole {
             | Self::PUTTANA
             | Self::DOTTORE
             | Self::INDEMONIATO => Nature::GOOD,
-            Self::WOLF | Self::SERIALKILLER | Self::VILLICOMANNARO | Self::GUFO => Nature::EVIL,
+            Self::WOLF | Self::SERIALKILLER  | Self::GUFO => Nature::EVIL,
             _ => Nature::UNKNOWN,
         }
     }
@@ -72,7 +72,7 @@ impl Default for LupusRole {
     }
 }
 
-#[derive(Clone, Debug, PartialOrd, PartialEq)]
+#[derive(Clone, Debug, PartialOrd, Ord, Eq, PartialEq)]
 pub enum LupusAction {
     RoleBlock(UserId),
     Frame(UserId),
