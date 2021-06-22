@@ -86,6 +86,8 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
         ASTENUTO_CIRCLE
     };
 
+    game.read().await.day_end().await;
+
     msg.channel_id
         .say(
             &ctx.http,

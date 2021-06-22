@@ -162,9 +162,9 @@ impl LupusGame {
             .unwrap()
     }
 
-    pub fn get_player(&self, player_id: &UserId) -> Option<&LupusPlayer> {
-        self.joined_players.get(player_id)
-    }
+    // pub fn get_player(&self, player_id: &UserId) -> Option<&LupusPlayer> {
+    //     self.joined_players.get(player_id)
+    // }
 
     pub fn get_player_mut(&mut self, player_id: &UserId) -> Option<&mut LupusPlayer> {
         self.joined_players.get_mut(player_id)
@@ -178,12 +178,22 @@ impl LupusGame {
         }
     }
 
-    async fn check_if_ended(&self) {
+    pub async fn day_end(&self) {
+        let has_ended = self.check_if_ended().await;
+        if !has_ended {
+            let _ = self.message_sender.send(GameMessage::DAYEND).await;
+        }
+    }
+
+    async fn check_if_ended(&self) -> bool {
         if false {
             let result = self.message_sender.send(GameMessage::GAMEEND).await;
             if let Err(_err) = result {
                 println!("Non sono riuscito a terminare il game con successo");
             }
+            true
+        } else {
+            false
         }
     }
 
