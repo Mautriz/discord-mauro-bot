@@ -23,6 +23,8 @@ The file should contain:
 
 ### Todo
 
-- Processare messaggi
-- Spawnare un game handler per game che gestisce timer, turni e fine game (ancora da capire come fare, forse handler globale con mscp)
-- Ricavare GuildId dell'utente dalla mappa globale nel lupus ctx
+SUPER MEGA WIPPONE DEVASTANTANTE MORTALE DEVO ANCORA FARE UN BOTTO DI ROBA
+- Esecuzione singole azioni di gioco
+- Check validitá dei singoli comandi dai giocatori
+- Capire come aprire chat private di gruppo
+- Cercare di capire come testare questa roba
