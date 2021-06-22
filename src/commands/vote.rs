@@ -38,11 +38,10 @@ pub async fn vote(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
             ReactionAction::Removed(_) => None,
         })
         .fold(HashMap::new(), |mut map, reaction| {
-            if let Some(num) = map.get(&reaction.emoji) {
-                map.insert(reaction.emoji, num + 1);
-            } else {
-                map.insert(reaction.emoji, 1);
-            }
+            map.insert(
+                reaction.emoji.clone(),
+                *map.get(&reaction.emoji).unwrap_or(&0) + 1,
+            );
             map
         });
 
