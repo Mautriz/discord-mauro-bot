@@ -85,3 +85,21 @@ pub enum LupusAction {
     Heal(UserId),
     // Remember(UserId),
 }
+
+// impl LupusAction {
+//     pub fn can_be_done_by(&self, role: LupusRole) -> bool {
+//         match *self {
+//             LupusAction::Frame(_) => role == LupusRole::GUFO,
+//             LupusAction::GivePicture(_) => role == LupusRole::DORIANGREY,
+//             LupusAction::Kill(_) => role == LupusRole::SERIALKILLER,
+//             LupusAction::Protect(_) | LupusAction::SelfProtect => {
+//                 if let role = LupusRole::BODYGUARD {
+//                     ..
+//                 }
+//             }
+//             LupusAction::WolfVote(_) => role == LupusRole::WOLF,
+//             LupusAction::Heal(_) => role == LupusRole::DOTTORE,
+//             LupusAction::TrueSight(_) => role == LupusRole::VEGGENTE,
+//         }
+//     }
+// }

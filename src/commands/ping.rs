@@ -8,7 +8,10 @@ use serenity::prelude::*;
 pub async fn ping(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let sent_msg = msg
         .channel_id
-        .say(&ctx.http, format!("Sono vivo o_O"))
+        .say(
+            &ctx.http,
+            format!("Ciao {}, sei un pagliaccio", msg.author.tag()),
+        )
         .await?;
 
     while let Some(reaction) = sent_msg
