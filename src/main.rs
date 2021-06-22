@@ -59,7 +59,7 @@ async fn my_help(
 }
 
 #[group]
-#[commands(ping, invito, random, vote)]
+#[commands(ping, invito, random, vote_limit)]
 struct General;
 
 #[tokio::main]

@@ -72,7 +72,7 @@ impl Default for LupusRole {
     }
 }
 
-#[derive(Clone, Debug, PartialOrd, Ord, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialOrd, Ord, Eq, PartialEq, Copy)]
 pub enum LupusAction {
     RoleBlock(UserId),
     Frame(UserId),
@@ -83,5 +83,5 @@ pub enum LupusAction {
     WolfVote(UserId),
     TrueSight(UserId),
     Heal(UserId),
-    Remember(UserId),
+    // Remember(UserId),
 }

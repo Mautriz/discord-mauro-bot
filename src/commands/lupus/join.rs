@@ -12,7 +12,7 @@ pub async fn join(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResul
     {
         let data = ctx.data.read().await;
         // Unwrap is always safe, as LupusCtx is defined in the general context of the main application
-        let lupus_ctx = data.lupus().await;
+        let mut lupus_ctx = data.lupus_mut().await;
         lupus_ctx.add_user(&guild_id, &user_id).await
     };
 

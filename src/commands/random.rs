@@ -11,10 +11,9 @@ pub async fn random(ctx: &Context, msg: &Message, mut args: Args) -> CommandResu
     let top_limit = args.single::<u32>()?;
 
     if top_limit < bottom_limit {
-        let _ = msg
-            .channel_id
+        msg.channel_id
             .say(&ctx.http, format!("Oh fra vedi di mette bene sti numeri"))
-            .await;
+            .await?;
         return Ok(());
     }
 
