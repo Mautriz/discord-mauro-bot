@@ -4,6 +4,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 #[command]
+#[only_in(guilds)]
 pub async fn start(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let guild_id = msg.guild_id.unwrap();
     let data = ctx.data.read().await;

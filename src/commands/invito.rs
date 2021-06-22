@@ -10,6 +10,7 @@ use tokio::time::sleep;
 const INVITE_DURATION: u64 = 600;
 
 #[command]
+#[only_in(guilds)]
 #[sub_commands(perma)]
 #[description = "crea un invito temporaneo assurdo che dopo 10 minuti esplode"]
 pub async fn invito(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
@@ -50,6 +51,7 @@ pub async fn invito(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
 }
 
 #[command]
+#[only_in(guilds)]
 #[required_permissions(ADMINISTRATOR)]
 #[description = "crea un invito temporaneo assurdo che dopo 10 minuti esplode"]
 pub async fn perma(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {

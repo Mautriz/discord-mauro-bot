@@ -5,6 +5,7 @@ use serenity::prelude::*;
 use crate::domain::lupus::context_ext::LupusHelpers;
 
 #[command]
+#[only_in(guilds)]
 pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let guild_id = msg.guild_id.unwrap();
     let data = ctx.data.read().await;

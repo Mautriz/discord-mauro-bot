@@ -6,6 +6,7 @@ use crate::domain::lupus::context_ext::LupusHelpers;
 use crate::domain::msg_ext::MessageExt;
 
 #[command]
+#[only_in(guilds)]
 pub async fn leave(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let (user_id, guild_id) = msg.get_ids();
 

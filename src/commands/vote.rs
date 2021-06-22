@@ -6,17 +6,11 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
-// use std::hash::Hash;
 use std::time::Duration;
 
-// impl Hash for Reaction {
-//     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-
-//     }
-// }
-
 #[command]
-pub async fn vote_limit(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+#[only_in(guilds)]
+pub async fn vote(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let requested_votes: u32 = args.single()?;
     let remains = args.rest();
 
