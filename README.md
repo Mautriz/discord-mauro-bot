@@ -19,6 +19,8 @@ It loads env variables from an .env file at the project root
 The file should contain:
 - DISCORD_TOKEN (the token in the bot page of the discord developer portal)
 
+### Difficoltà della partita lupus
+
 
 
 ### Todo
@@ -28,3 +30,4 @@ SUPER MEGA WIPPONE DEVASTANTANTE MORTALE DEVO ANCORA FARE UN BOTTO DI ROBA
 - Check validitá dei singoli comandi dai giocatori
 - Capire come aprire chat private di gruppo
 - Cercare di capire come testare questa roba
+- Capire come refactorare i vari read nestati dei RwLock perchè c'é un botto di codice duplicato pessimo
