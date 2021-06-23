@@ -1,18 +1,13 @@
-use serenity::prelude::TypeMap;
-use tokio::sync::{RwLockReadGuard, RwLockWriteGuard};
-
-use super::context::{LupusCtx, LupusManager};
-use serenity::async_trait;
-
+use crate::domain::lupus::context_ext::LupusHelpers;
 use crate::domain::lupus::roles::LupusAction;
 use crate::domain::msg_ext::MessageExt;
-use serenity::framework::standard::CommandResult;
+use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-pub struct LupusCtxHelper {}
+pub struct ContextHelper {}
 
-impl LupusCtxHelper {
+impl ContextHelper {
     pub async fn send_lupus_command(
         ctx: &Context,
         msg: &Message,
@@ -33,22 +28,5 @@ impl LupusCtxHelper {
         };
 
         Ok(())
-    }
-}
-
-#[async_trait]
-pub trait LupusHelpers {
-    async fn lupus(&self) -> RwLockReadGuard<LupusManager>;
-    async fn lupus_mut(&self) -> RwLockWriteGuard<LupusManager>;
-}
-
-#[async_trait]
-impl LupusHelpers for RwLockReadGuard<'_, TypeMap> {
-    async fn lupus(&self) -> RwLockReadGuard<LupusManager> {
-        self.get::<LupusCtx>().unwrap().read().await
-    }
-
-    async fn lupus_mut(&self) -> RwLockWriteGuard<LupusManager> {
-        self.get::<LupusCtx>().unwrap().write().await
     }
 }

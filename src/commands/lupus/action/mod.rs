@@ -4,6 +4,7 @@ use serenity::prelude::*;
 
 mod frame;
 mod givepicture;
+mod heal;
 mod kill;
 mod possess;
 mod protect;
@@ -14,6 +15,7 @@ mod wolfvote;
 
 use frame::*;
 use givepicture::*;
+use heal::*;
 use kill::*;
 use possess::*;
 use protect::*;
@@ -32,7 +34,8 @@ use wolfvote::*;
     wolfvote,
     truesight,
     possess,
-    start_vote
+    start_vote,
+    heal
 )]
 pub async fn action(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let _ = msg

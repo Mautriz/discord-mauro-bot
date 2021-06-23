@@ -162,9 +162,9 @@ impl LupusGame {
             .unwrap()
     }
 
-    // pub fn get_player(&self, player_id: &UserId) -> Option<&LupusPlayer> {
-    //     self.joined_players.get(player_id)
-    // }
+    pub fn get_player(&self, player_id: &UserId) -> Option<&LupusPlayer> {
+        self.joined_players.get(player_id)
+    }
 
     pub fn get_player_mut(&mut self, player_id: &UserId) -> Option<&mut LupusPlayer> {
         self.joined_players.get_mut(player_id)
@@ -238,18 +238,15 @@ impl LupusGame {
             }
             LupusAction::Protect(user_id) => {
                 if let Some(target) = self.joined_players.get_mut(&user_id) {
+                    if let LupusRole::BODYGUARD { self_protected } = target.role {
+                        if self_protected {
+                            return;
+                        }
+                        target.role = LupusRole::BODYGUARD {
+                            self_protected: true,
+                        };
+                    }
                     target.is_protected = true;
-                }
-            }
-            LupusAction::SelfProtect => {
-                if let Some(LupusPlayer {
-                    role: LupusRole::BODYGUARD { self_protected },
-                    is_protected,
-                    ..
-                }) = self.joined_players.get_mut(&action.0)
-                {
-                    *is_protected = true;
-                    *self_protected = true;
                 }
             }
             LupusAction::RoleBlock(user_id) => {
@@ -295,7 +292,24 @@ impl LupusPlayer {
     }
 
     fn get_nature(&self) -> Nature {
-        self.role.get_nature()
+        if self.framed {
+            Nature::EVIL
+        } else {
+            self.role.get_nature()
+        }
+    }
+
+    pub fn role(&self) -> LupusRole {
+        self.role
+    }
+
+    pub fn set_witch_role(&mut self, new_role: LupusRole) {
+        match self.role {
+            LupusRole::STREGA(..) => {
+                self.role = LupusRole::STREGA(Box::new(new_role));
+            }
+            _ => (),
+        }
     }
 
     pub fn kill(&mut self) -> Result<(), KillError> {

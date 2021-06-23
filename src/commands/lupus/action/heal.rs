@@ -5,8 +5,8 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 #[command]
-pub async fn kill(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+pub async fn heal(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let target_id: UserId = args.single()?;
 
-    LupusCtxHelper::send_lupus_command(ctx, msg, LupusAction::Kill(target_id)).await
+    LupusCtxHelper::send_lupus_command(ctx, msg, LupusAction::Heal(target_id)).await
 }

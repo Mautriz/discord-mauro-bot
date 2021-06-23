@@ -78,7 +78,6 @@ pub enum LupusAction {
     Frame(UserId),
     GivePicture(UserId),
     Protect(UserId),
-    SelfProtect,
     Kill(UserId),
     WolfVote(UserId),
     TrueSight(UserId),
