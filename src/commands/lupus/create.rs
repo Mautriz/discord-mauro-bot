@@ -3,12 +3,14 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use crate::domain::lupus::context_ext::LupusHelpers;
+use crate::domain::msg_ext::MessageExt;
 
 #[command]
 #[only_in(guilds)]
 pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
-    let guild_id = msg.guild_id.unwrap();
     let data = ctx.data.read().await;
+    let (user_id, guild_id) = msg.get_ids();
+
     // Unwrap is always safe, as LupusCtx is defined in the general context of the main application
     let rx_option = {
         let mut lupus_ctx = data.lupus_mut().await;
@@ -23,7 +25,7 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
         Ok(mut rx) => {
             let lupus_ctx = data.lupus().await;
             let rx_ref = &mut rx;
-            lupus_ctx.handle_game(&guild_id, rx_ref).await;
+            lupus_ctx.handle_game(&guild_id, rx_ref, ctx).await;
         }
         _ => (),
     };

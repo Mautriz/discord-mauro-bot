@@ -28,11 +28,14 @@ pub async fn possess(ctx: &Context, msg: &Message, mut args: Args) -> CommandRes
     let (target_id, _) = lupus.get_ids_from_tag(Tag(tag)).ok_or(MyError)?;
     let game = lupus.get_game(&guild_id).ok_or(MyError)?;
 
+    let game_reader = game.read().await;
+    let target_player = game_reader.get_player(&target_id).ok_or(MyError)?;
+
     {
         let mut game_writer = game.write().await;
-        let target_player = game_writer.get_player(&target_id).ok_or(MyError)?;
+        // let target_player = game_writer.get_player(&target_id).ok_or(MyError)?;
         let player_mut = game_writer.get_player_mut(&user_id).ok_or(MyError)?;
-        player_mut.set_witch_role(target_player.role())
+        player_mut.set_witch_role(target_player.role().to_owned())
     }
 
     let _ = msg
