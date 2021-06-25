@@ -262,7 +262,9 @@ impl LupusGame {
                 }
             }
             LupusAction::WolfVote(_) => todo!(),
-            LupusAction::TrueSight(user_id) => {}
+            LupusAction::TrueSight(_user_id) => {
+                let _ = action.0.create_dm_channel(&ctx.http);
+            }
         }
     }
 
@@ -299,7 +301,7 @@ impl LupusPlayer {
         }
     }
 
-    fn get_nature(&self) -> Nature {
+    fn _get_nature(&self) -> Nature {
         if self.framed {
             Nature::EVIL
         } else {

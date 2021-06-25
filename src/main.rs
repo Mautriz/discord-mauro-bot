@@ -17,12 +17,13 @@ use serenity::{
     model::{channel::Message, event::ResumedEvent, gateway::Ready, id::UserId},
     prelude::*,
 };
+use songbird::SerenityInit;
 use std::{collections::HashSet, env, sync::Arc};
 
 use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use commands::{invito::*, lupus::*, ping::*, random::*, vote::*};
+use commands::{invito::*, lupus::*, ping::*, random::*, suona::*, vote::*};
 
 use crate::domain::lupus::context::{LupusCtx, LupusManager};
 
@@ -59,7 +60,7 @@ async fn my_help(
 }
 
 #[group]
-#[commands(ping, invito, random, vote)]
+#[commands(ping, invito, random, vote, suona)]
 struct General;
 
 #[tokio::main]
@@ -102,6 +103,7 @@ async fn main() {
 
     let mut client = Client::builder(&token)
         .framework(framework)
+        .register_songbird()
         .event_handler(Handler)
         .await
         .expect("Err creating client");
