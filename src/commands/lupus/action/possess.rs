@@ -26,7 +26,7 @@ pub async fn possess(ctx: &Context, msg: &Message, mut args: Args) -> CommandRes
         let mut game_writer = game.write().await;
         // let target_player = game_writer.get_player(&target_id).ok_or(MyError)?;
         let player_mut = game_writer.get_player_mut(&user_id).ok_or(MyError)?;
-        player_mut.set_witch_role(target_player.current_role().to_owned());
+        player_mut.set_current_role(target_player.current_role().to_owned());
 
         target_player.current_role().to_owned()
     };

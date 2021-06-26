@@ -15,23 +15,28 @@ pub async fn givepicture(ctx: &Context, msg: &Message, mut args: Args) -> Comman
         .await
         .ok_or(MyError)?;
 
-    let player = {
+    {
         let dt = ctx.data.read().await;
-        dt.get_player(&guild_id, &user_id).await
-    };
+        let lupus = dt.lupus().await;
+        let game = lupus.get_game(&guild_id).ok_or(MyError)?;
 
-    if let Some(p) = player {
+        let mut game_writer = game.write().await;
+        let player = game_writer.get_player_mut(&user_id).ok_or(MyError)?;
+
         if let LupusRole::DORIANGREY {
             has_quadro: true, ..
-        } = *p.current_role()
+        } = *player.current_role()
         {
-            LupusCtxHelper::send_lupus_command(ctx, msg, LupusAction::GivePicture(target_id))
-                .await?
+            player.set_current_role(LupusRole::DORIANGREY {
+                has_quadro: true,
+                given_to: Some(target_id),
+            })
         } else {
             msg.channel_id
                 .say(&ctx.http, "fra... ruolo sbagliato")
                 .await?;
         }
-    }
+    };
+
     Ok(())
 }

@@ -370,12 +370,12 @@ impl LupusPlayer {
         }
     }
 
-    pub fn set_witch_role(&mut self, new_role: LupusRole) {
+    pub fn set_current_role(&mut self, new_role: LupusRole) {
         match self.role {
             LupusRole::STREGA(..) => {
                 self.role = LupusRole::STREGA(Box::new(new_role));
             }
-            _ => (),
+            _ => self.role = new_role,
         }
     }
 
@@ -384,32 +384,22 @@ impl LupusPlayer {
     }
 
     pub fn kill(&mut self) -> Result<(), KillError> {
-        match self {
-            Self {
-                role:
-                    LupusRole::DORIANGREY {
-                        given_to: Some(quadro_target),
-                        has_quadro: true,
-                    },
-                ..
+        match self.current_role() {
+            LupusRole::DORIANGREY {
+                given_to: Some(quadro_target),
+                has_quadro: true,
             } => {
-                self.role = LupusRole::DORIANGREY {
+                self.set_current_role(LupusRole::DORIANGREY {
                     given_to: None,
                     has_quadro: false,
-                };
+                });
 
                 Err(KillError::DorianGray {
                     target: quadro_target.clone(),
                 })
             }
-            Self {
-                role: LupusRole::CRICETO,
-                ..
-            } => Err(KillError::UnkillableTarget),
-            Self {
-                role: LupusRole::SERIALKILLER,
-                ..
-            } => Err(KillError::UnkillableTarget),
+            LupusRole::CRICETO => Err(KillError::UnkillableTarget),
+            LupusRole::SERIALKILLER => Err(KillError::UnkillableTarget),
             _ => {
                 self.alive = false;
                 Ok(())
@@ -418,27 +408,20 @@ impl LupusPlayer {
     }
 
     pub fn guard_kill(&mut self) -> Result<(), KillError> {
-        match self {
-            Self {
-                role:
-                    LupusRole::DORIANGREY {
-                        given_to: Some(quadro_target),
-                        has_quadro: true,
-                    },
-                ..
+        match self.current_role() {
+            LupusRole::DORIANGREY {
+                given_to: Some(quadro_target),
+                has_quadro: true,
             } => {
-                self.role = LupusRole::DORIANGREY {
+                self.set_current_role(LupusRole::DORIANGREY {
                     given_to: None,
                     has_quadro: false,
-                };
+                });
                 Err(KillError::DorianGray {
                     target: quadro_target.clone(),
                 })
             }
-            Self {
-                role: LupusRole::SERIALKILLER,
-                ..
-            } => Err(KillError::UnkillableTarget),
+            LupusRole::SERIALKILLER => Err(KillError::UnkillableTarget),
             _ => {
                 self.alive = false;
                 Ok(())

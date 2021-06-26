@@ -61,14 +61,10 @@ impl LupusHelpers for RwLockReadGuard<'_, TypeMap> {
 
     async fn get_player(&self, guild_id: &GuildId, uid: &UserId) -> Option<LupusPlayer> {
         let lupus = self.lupus().await;
-        let game = lupus.get_game(guild_id);
+        let game = lupus.get_game(guild_id)?;
 
-        if let Some(gm) = game {
-            let gm_reader = gm.read().await;
-            let player = gm_reader.get_player(uid);
-            player.cloned()
-        } else {
-            None
-        }
+        let gm_reader = game.read().await;
+        let player = gm_reader.get_player(uid)?;
+        Some(player.to_owned())
     }
 }
