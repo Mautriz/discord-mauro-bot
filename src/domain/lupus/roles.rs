@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serenity::model::id::UserId;
 
 // LUPI: durante la notte uccidono una persona; sono visti cattivi dal veggente
@@ -36,14 +38,21 @@ pub enum LupusRole {
     // ANGELO,
     // AMNESIA,
     VILLICO,
-    WOLF,
+    WOLF { is_leader: bool },
     NOTASSIGNED,
 }
 
+#[derive(Debug)]
 pub enum Nature {
     GOOD,
     EVIL,
     UNKNOWN,
+}
+
+impl Display for Nature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl LupusRole {
@@ -60,8 +69,25 @@ impl LupusRole {
             | Self::PUTTANA
             | Self::DOTTORE
             | Self::INDEMONIATO => Nature::GOOD,
-            Self::WOLF | Self::SERIALKILLER  | Self::GUFO => Nature::EVIL,
+            Self::WOLF {..} | Self::SERIALKILLER  | Self::GUFO => Nature::EVIL,
+            | Self::STREGA(inner) => {
+                inner.get_nature()
+            }
             _ => Nature::UNKNOWN,
+        }
+    }
+
+    pub fn is_good_for_win(&self) -> bool {
+        match self {
+            Self::VEGGENTE
+            | Self::BODYGUARD { .. }
+            | Self::VIGILANTE
+            | Self::MEDIUM
+            | Self::DORIANGREY
+            | Self::VILLICO
+            | Self::PUTTANA
+            | Self::DOTTORE => true,
+            _ => false,
         }
     }
 }
@@ -78,27 +104,9 @@ pub enum LupusAction {
     Frame(UserId),
     GivePicture(UserId),
     Protect(UserId),
+    GuardShot(UserId),
     Kill(UserId),
     WolfVote(UserId),
     TrueSight(UserId),
     Heal(UserId),
-    // Remember(UserId),
 }
-
-// impl LupusAction {
-//     pub fn can_be_done_by(&self, role: LupusRole) -> bool {
-//         match *self {
-//             LupusAction::Frame(_) => role == LupusRole::GUFO,
-//             LupusAction::GivePicture(_) => role == LupusRole::DORIANGREY,
-//             LupusAction::Kill(_) => role == LupusRole::SERIALKILLER,
-//             LupusAction::Protect(_) | LupusAction::SelfProtect => {
-//                 if let role = LupusRole::BODYGUARD {
-//                     ..
-//                 }
-//             }
-//             LupusAction::WolfVote(_) => role == LupusRole::WOLF,
-//             LupusAction::Heal(_) => role == LupusRole::DOTTORE,
-//             LupusAction::TrueSight(_) => role == LupusRole::VEGGENTE,
-//         }
-//     }
-// }

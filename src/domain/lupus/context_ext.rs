@@ -1,12 +1,12 @@
 use serenity::prelude::TypeMap;
 use tokio::sync::{RwLockReadGuard, RwLockWriteGuard};
 
-use super::context::{LupusCtx, LupusManager};
+use super::context::{LupusCtx, LupusManager, Tag};
 use serenity::async_trait;
 
 use crate::domain::lupus::roles::LupusAction;
 use crate::domain::msg_ext::MessageExt;
-use serenity::framework::standard::CommandResult;
+use serenity::framework::standard::{Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
@@ -33,6 +33,12 @@ impl LupusCtxHelper {
         };
 
         Ok(())
+    }
+
+    pub async fn parse_tag_to_target_id(ctx: &Context, tag: Tag) -> Option<(UserId, GuildId)> {
+        let data = ctx.data.read().await;
+        let lupus = data.lupus().await;
+        lupus.get_ids_from_tag(tag)
     }
 }
 

@@ -9,7 +9,18 @@ pub async fn ls(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult 
     let data = ctx.data.read().await;
     // Unwrap is always safe, as LupusCtx is defined in the general context of the main application
     let lupus_ctx = data.lupus().await;
-    lupus_ctx.start_game(&guild_id).await;
+    if let Some(game) = lupus_ctx.get_game(&guild_id) {
+        let game_reader = game.read().await;
+        let player_tag_list: Vec<_> = game_reader
+            .joined_players
+            .iter()
+            .map(|a| lupus_ctx.get_tag_from_id(a.0).map(|a| &a.0))
+            .collect();
+
+        msg.channel_id
+            .say(&ctx.http, format!("Player in game: {:?}", player_tag_list))
+            .await?;
+    }
 
     Ok(())
 }

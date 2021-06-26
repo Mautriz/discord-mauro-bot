@@ -9,23 +9,26 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 use crate::consts::{ASTENUTO_CIRCLE, NO_CIRCLE, YES_CIRCLE};
+use crate::domain::error::MyError;
 use crate::domain::lupus::context::Tag;
-use crate::domain::lupus::context_ext::LupusHelpers;
+use crate::domain::lupus::context_ext::{LupusCtxHelper, LupusHelpers};
 use crate::domain::msg_ext::MessageExt;
 
 #[command]
 #[only_in(guilds)]
 pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    let target: String = args.trimmed().rest().to_string();
+    let target_tag: String = args.single()?;
+    let (target_id, target_guild_id) =
+        LupusCtxHelper::parse_tag_to_target_id(ctx, Tag(target_tag.clone()))
+            .await
+            .ok_or(MyError)?;
+
     let data_read = ctx.data.read().await;
     let lupus_manager = data_read.lupus().await;
     let (_user_id, guild_id) = msg.get_ids();
     let game = lupus_manager
         .get_game(&guild_id)
         .ok_or("Ciao".to_string())?;
-    let (target_id, target_guild_id) = lupus_manager
-        .get_ids_from_tag(Tag(target.clone()))
-        .ok_or("ciao".to_string())?;
 
     if guild_id != target_guild_id {
         println!("Different guild ids");
@@ -36,7 +39,7 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
 
     let sent_msg = msg
         .channel_id
-        .say(&ctx.http, format!("votazione per: {}", &target.clone()))
+        .say(&ctx.http, format!("votazione per: {}", target_tag.clone()))
         .await?;
 
     sent_msg.react(&ctx.http, YES_CIRCLE).await?;
@@ -74,10 +77,8 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
 
     let result = if yes_count > no_count {
         let mut game_writer = game.write().await;
-        let player = game_writer
-            .get_player_mut(&target_id)
-            .ok_or("idk".to_string())?;
-        let _ = player.kill();
+        let player = game_writer.get_player_mut(&target_id).ok_or(MyError)?;
+        let _ = player.force_kill();
 
         YES_CIRCLE
     } else if yes_count < no_count {
@@ -91,7 +92,7 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
     msg.channel_id
         .say(
             &ctx.http,
-            format!("risultato per: {} ... {}", target, result),
+            format!("risultato per: {} ... {}", target_tag, result),
         )
         .await?;
 

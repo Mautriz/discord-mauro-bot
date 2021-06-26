@@ -1,5 +1,8 @@
+use std::collections::vec_deque::Iter;
 use std::convert::TryInto;
 use std::{collections::HashMap, sync::Arc};
+
+use crate::domain::error::MyError;
 
 use super::roles::{LupusAction, LupusRole, Nature};
 use super::roles_per_players;
@@ -13,14 +16,8 @@ impl TypeMapKey for LupusCtx {
     type Value = Arc<RwLock<LupusManager>>;
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub struct Tag(pub String);
-
-impl Tag {
-    // fn username(&self) -> String {
-    //     self.0.to_string()
-    // }
-}
 
 pub struct LupusManager {
     games: HashMap<GuildId, Arc<RwLock<LupusGame>>>,
@@ -37,11 +34,34 @@ impl LupusManager {
         }))
     }
 
+    pub async fn handle_night(&self, guild_id: &GuildId, ctx: &Context) {
+        // Aspetta l'evento
+        let game = self.get_game(guild_id).unwrap();
+        let mut game_writer = game.write().await;
+        game_writer.process_actions(ctx).await;
+        game_writer.cleanup();
+        let game_read = game.read().await;
+        game_read.check_if_ended().await;
+    }
+
+    pub async fn handle_day(&self, guild_id: &GuildId) {
+        let game = self.get_game(guild_id).unwrap();
+        let game_read = game.read().await;
+        game_read.check_if_ended().await;
+    }
+
     pub fn get_ids_from_tag(&self, tag: Tag) -> Option<(UserId, GuildId)> {
         let user_id = *self.tag_to_user_id.get(&tag)?;
         let guild_id = *self.user_to_guild.get(&user_id)?;
 
         Some((user_id, guild_id))
+    }
+
+    pub fn get_tag_from_id(&self, user_id: &UserId) -> Option<&Tag> {
+        self.tag_to_user_id
+            .iter()
+            .find(|(_, t_id)| *user_id == **t_id)
+            .map(|(tag, _)| tag)
     }
 
     pub fn create_game(&mut self, guild_id: &GuildId) -> Result<Receiver<GameMessage>, String> {
@@ -67,6 +87,7 @@ impl LupusManager {
             game_writer
                 .joined_players
                 .insert(player.id, LupusPlayer::new());
+            println!("{:?}", game_writer.joined_players.clone());
         }
     }
 
@@ -82,58 +103,29 @@ impl LupusManager {
         self.games.get(&guild_id)
     }
 
-    pub async fn start_game(&self, guild_id: &GuildId) {
+    pub async fn start_game(&self, ctx: &Context, guild_id: &GuildId) {
         if let Some(game) = self.games.get(&guild_id) {
             let mut game_writer = game.write().await;
             let player_num = game_writer.joined_players.len();
             let mut rng_roles = roles_per_players::get_roles(player_num);
-            for (_, player) in game_writer.joined_players.iter_mut() {
+            for (player_id, player) in game_writer.joined_players.iter_mut() {
                 if let Some(role) = rng_roles.pop() {
+                    println!("{:?} - {:?}", player.clone(), role.clone());
+                    let ch = player_id.create_dm_channel(&ctx.http).await.unwrap();
+                    let _ = ch
+                        .say(
+                            &ctx.http,
+                            format!("Il tuo ruolo è: {:?}", player.role.clone()),
+                        )
+                        .await;
                     player.role = role;
                 }
             }
         }
     }
-
-    pub async fn handle_game(
-        &self,
-        guild_id: &GuildId,
-        rx: &mut Receiver<GameMessage>,
-        ctx: &Context,
-    ) {
-        match self.get_game(guild_id) {
-            Some(game) => {
-                format!("Game handling started for game {:?}", guild_id);
-                while let Some(msg) = rx.recv().await {
-                    match msg {
-                        GameMessage::DAYEND => {
-                            self.handle_night(game, ctx).await;
-                        }
-                        GameMessage::NIGHTEND => self.handle_day(game).await,
-                        GameMessage::GAMEEND => return,
-                    };
-                }
-            }
-            None => (),
-        };
-    }
-
-    async fn handle_night(&self, game: &Arc<RwLock<LupusGame>>, ctx: &Context) {
-        // Aspetta l'evento
-        let mut game_writer = game.write().await;
-        game_writer.process_actions(ctx);
-        game_writer.cleanup();
-        let game_read = game.read().await;
-        game_read.check_if_ended().await;
-    }
-
-    async fn handle_day(&self, game: &Arc<RwLock<LupusGame>>) {
-        let game_read = game.read().await;
-        game_read.check_if_ended().await;
-    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum GameMessage {
     NIGHTEND,
     DAYEND,
@@ -143,7 +135,7 @@ pub enum GameMessage {
 #[derive(Debug)]
 pub struct LupusGame {
     action_buffer: HashMap<UserId, LupusAction>,
-    joined_players: HashMap<UserId, LupusPlayer>,
+    pub joined_players: HashMap<UserId, LupusPlayer>,
     message_sender: Sender<GameMessage>,
 }
 
@@ -189,7 +181,17 @@ impl LupusGame {
     }
 
     async fn check_if_ended(&self) -> bool {
-        if false {
+        let alive_players = self
+            .joined_players
+            .iter()
+            .filter(|(_, player)| player.alive);
+
+        let good_players_count = alive_players
+            .filter(|(_, player)| player.role.is_good_for_win())
+            .count();
+
+        // Vincono i lupi o vince il rimanente
+        if good_players_count == 1 || good_players_count == 0 {
             let result = self.message_sender.send(GameMessage::GAMEEND).await;
             if let Err(_err) = result {
                 println!("Non sono riuscito a terminare il game con successo");
@@ -200,15 +202,15 @@ impl LupusGame {
         }
     }
 
-    fn process_actions(&mut self, ctx: &Context) {
+    async fn process_actions(&mut self, ctx: &Context) {
         let mut buffer: Vec<_> = self.action_buffer.drain().collect();
         buffer.sort_by_key(|a| a.1);
         while let Some(action) = buffer.pop() {
-            self.process_action(action, ctx)
+            self.process_action(action, ctx).await
         }
     }
 
-    fn process_action(&mut self, action: (UserId, LupusAction), ctx: &Context) {
+    async fn process_action(&mut self, action: (UserId, LupusAction), ctx: &Context) {
         let player = self.joined_players.get(&action.0);
         // Se il player che fa l'azione è roleblockato, ritorna senza fare nulla
         if let Some(LupusPlayer {
@@ -226,7 +228,7 @@ impl LupusGame {
             }
             LupusAction::GivePicture(user_id) => {
                 if let Some(target) = self.joined_players.get_mut(&user_id) {
-                    target.has_painting = true;
+                    target.has_painting = Some(action.0);
                 }
             }
             LupusAction::Heal(user_id) => {
@@ -234,12 +236,23 @@ impl LupusGame {
                     target.alive = true;
                 }
             }
-            LupusAction::Kill(user_id) => {
+            LupusAction::GuardShot(user_id) => {
                 if let Some(player) = self.joined_players.get_mut(&user_id) {
                     let killed = player.kill();
-                    if let Err(KillError::HasPainting) = killed {
-                        // Da capire
-                        // self.joined_players.iter_mut().find(|(_, &p)| p.role == LupusRole::DORIANGREY)
+                    if let Err(KillError::HasPainting { from }) = killed {
+                        if let Some(original) = self.joined_players.get_mut(&from) {
+                            original.guard_kill();
+                        };
+                    }
+                }
+            }
+            LupusAction::Kill(user_id) | LupusAction::WolfVote(user_id) => {
+                if let Some(player) = self.joined_players.get_mut(&user_id) {
+                    let killed = player.kill();
+                    if let Err(KillError::HasPainting { from }) = killed {
+                        if let Some(original) = self.joined_players.get_mut(&from) {
+                            original.kill();
+                        };
                     }
                 }
             }
@@ -261,9 +274,19 @@ impl LupusGame {
                     target.role_blocked = true;
                 }
             }
-            LupusAction::WolfVote(_) => todo!(),
-            LupusAction::TrueSight(_user_id) => {
-                let _ = action.0.create_dm_channel(&ctx.http);
+            LupusAction::TrueSight(user_id) => {
+                let channel = action.0.create_dm_channel(&ctx.http).await.unwrap();
+                let player_to_check = self.joined_players.get(&user_id);
+
+                if let Some(pl) = player_to_check {
+                    let nature = pl.get_nature();
+                    let _ = channel
+                        .say(
+                            &ctx.http,
+                            format!("Fra conta che quello che stai guardando è {}", nature),
+                        )
+                        .await;
+                }
             }
         }
     }
@@ -282,11 +305,12 @@ pub struct LupusPlayer {
     framed: bool,
     role_blocked: bool,
     is_protected: bool,
-    has_painting: bool,
+    has_painting: Option<UserId>,
 }
 
 pub enum KillError {
-    HasPainting,
+    HasPainting { from: UserId },
+    UnkillableTarget,
 }
 
 impl LupusPlayer {
@@ -297,11 +321,11 @@ impl LupusPlayer {
             is_protected: false,
             framed: false,
             role_blocked: false,
-            has_painting: false,
+            has_painting: None,
         }
     }
 
-    fn _get_nature(&self) -> Nature {
+    fn get_nature(&self) -> Nature {
         if self.framed {
             Nature::EVIL
         } else {
@@ -313,6 +337,13 @@ impl LupusPlayer {
         &self.role
     }
 
+    pub fn current_role(&self) -> &LupusRole {
+        match &self.role {
+            LupusRole::STREGA(inner) => inner,
+            _ => &self.role(),
+        }
+    }
+
     pub fn set_witch_role(&mut self, new_role: LupusRole) {
         match self.role {
             LupusRole::STREGA(..) => {
@@ -322,11 +353,45 @@ impl LupusPlayer {
         }
     }
 
+    pub fn force_kill(&mut self) {
+        self.alive = false
+    }
+
     pub fn kill(&mut self) -> Result<(), KillError> {
         match self {
             Self {
-                has_painting: true, ..
-            } => Err(KillError::HasPainting),
+                has_painting: Some(user_id),
+                ..
+            } => Err(KillError::HasPainting {
+                from: user_id.clone(),
+            }),
+            Self {
+                role: LupusRole::CRICETO,
+                ..
+            } => Err(KillError::UnkillableTarget),
+            Self {
+                role: LupusRole::SERIALKILLER,
+                ..
+            } => Err(KillError::UnkillableTarget),
+            _ => {
+                self.alive = false;
+                Ok(())
+            }
+        }
+    }
+
+    pub fn guard_kill(&mut self) -> Result<(), KillError> {
+        match self {
+            Self {
+                has_painting: Some(user_id),
+                ..
+            } => Err(KillError::HasPainting {
+                from: user_id.clone(),
+            }),
+            Self {
+                role: LupusRole::SERIALKILLER,
+                ..
+            } => Err(KillError::UnkillableTarget),
             _ => {
                 self.alive = false;
                 Ok(())
@@ -336,7 +401,7 @@ impl LupusPlayer {
 
     fn cleanup(&mut self) {
         self.framed = false;
-        self.has_painting = false;
+        self.has_painting = None;
         self.is_protected = false;
         self.role_blocked = false;
     }

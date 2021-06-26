@@ -7,14 +7,17 @@ use crate::domain::lupus::context_ext::LupusHelpers;
 #[command]
 #[only_in(guilds)]
 pub async fn join(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
+    println!("Bella sono qua");
     // let user_id = msg.author.id;
     let guild_id = msg.guild_id.unwrap();
+    println!("Bella sono qua");
 
     {
         let data = ctx.data.read().await;
         // Unwrap is always safe, as LupusCtx is defined in the general context of the main application
         let mut lupus_ctx = data.lupus_mut().await;
-        lupus_ctx.add_user(&guild_id, &msg.author).await
+        println!("Bella sono qua");
+        lupus_ctx.add_user(&guild_id, &msg.author).await;
     };
 
     let _ = msg
