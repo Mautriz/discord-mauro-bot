@@ -17,7 +17,10 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
         LupusRole::STREGA(Box::new(LupusRole::NOTASSIGNED)),
         LupusRole::INDEMONIATO,
         LupusRole::VIGILANTE { has_shot: false },
-        LupusRole::DORIANGREY,
+        LupusRole::DORIANGREY {
+            has_quadro: true,
+            given_to: None,
+        },
         LupusRole::SERIALKILLER,
         LupusRole::PUTTANA,
         LupusRole::DOTTORE,

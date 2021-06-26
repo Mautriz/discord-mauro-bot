@@ -21,7 +21,7 @@ pub async fn kill(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
     };
 
     if let Some(p) = player {
-        if let LupusRole::SERIALKILLER = *p.role() {
+        if let LupusRole::SERIALKILLER = *p.current_role() {
             LupusCtxHelper::send_lupus_command(ctx, msg, LupusAction::Kill(target_id)).await?
         } else {
             msg.channel_id

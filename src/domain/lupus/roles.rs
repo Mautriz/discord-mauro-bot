@@ -24,11 +24,18 @@ use serenity::model::id::UserId;
 pub enum LupusRole {
     VEGGENTE,
     CRICETO,
-    BODYGUARD { self_protected: bool },
-    VIGILANTE { has_shot: bool },
+    BODYGUARD {
+        self_protected: bool,
+    },
+    VIGILANTE {
+        has_shot: bool,
+    },
     MEDIUM,
     GUFO,
-    DORIANGREY,
+    DORIANGREY {
+        has_quadro: bool,
+        given_to: Option<UserId>,
+    },
     // VILLICOMANNARO,
     PUTTANA,
     SERIALKILLER,
@@ -38,7 +45,9 @@ pub enum LupusRole {
     // ANGELO,
     // AMNESIA,
     VILLICO,
-    WOLF { is_leader: bool },
+    WOLF {
+        is_leader: bool,
+    },
     NOTASSIGNED,
 }
 
@@ -64,7 +73,7 @@ impl LupusRole {
             | Self::BODYGUARD { .. }
             | Self::VIGILANTE { .. }
             | Self::MEDIUM
-            | Self::DORIANGREY
+            | Self::DORIANGREY { .. }
             | Self::VILLICO
             | Self::PUTTANA
             | Self::DOTTORE
@@ -83,7 +92,7 @@ impl LupusRole {
             | Self::BODYGUARD { .. }
             | Self::VIGILANTE { .. }
             | Self::MEDIUM
-            | Self::DORIANGREY
+            | Self::DORIANGREY { .. }
             | Self::VILLICO
             | Self::PUTTANA
             | Self::DOTTORE => true,
@@ -102,7 +111,6 @@ impl Default for LupusRole {
 pub enum LupusAction {
     RoleBlock(UserId),
     Frame(UserId),
-    GivePicture(UserId),
     Protect(UserId),
     GuardShot(UserId),
     Kill(UserId),

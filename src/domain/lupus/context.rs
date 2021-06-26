@@ -249,33 +249,38 @@ impl LupusGame {
                     target.framed = true;
                 }
             }
-            LupusAction::GivePicture(user_id) => {
-                if let Some(target) = self.joined_players.get_mut(&user_id) {
-                    target.has_painting = Some(action.0);
-                }
-            }
             LupusAction::Heal(user_id) => {
                 if let Some(target) = self.joined_players.get_mut(&user_id) {
                     target.alive = true;
                 }
             }
             LupusAction::GuardShot(user_id) => {
-                if let Some(player) = self.joined_players.get_mut(&user_id) {
-                    let killed = player.kill();
-                    if let Err(KillError::HasPainting { from }) = killed {
-                        if let Some(original) = self.joined_players.get_mut(&from) {
-                            original.guard_kill();
-                        };
+                let mut target_id = user_id;
+                loop {
+                    let player_option = self.joined_players.get_mut(&user_id);
+                    if let Some(player) = player_option {
+                        if let Err(KillError::DorianGray { target }) = player.guard_kill() {
+                            target_id = target;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
                     }
                 }
             }
             LupusAction::Kill(user_id) | LupusAction::WolfVote(user_id) => {
-                if let Some(player) = self.joined_players.get_mut(&user_id) {
-                    let killed = player.kill();
-                    if let Err(KillError::HasPainting { from }) = killed {
-                        if let Some(original) = self.joined_players.get_mut(&from) {
-                            original.kill();
-                        };
+                let mut target_id = user_id;
+                loop {
+                    let player_option = self.joined_players.get_mut(&user_id);
+                    if let Some(player) = player_option {
+                        if let Err(KillError::DorianGray { target }) = player.kill() {
+                            target_id = target;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
                     }
                 }
             }
@@ -328,11 +333,10 @@ pub struct LupusPlayer {
     framed: bool,
     role_blocked: bool,
     is_protected: bool,
-    has_painting: Option<UserId>,
 }
 
 pub enum KillError {
-    HasPainting { from: UserId },
+    DorianGray { target: UserId },
     UnkillableTarget,
 }
 
@@ -344,7 +348,6 @@ impl LupusPlayer {
             is_protected: false,
             framed: false,
             role_blocked: false,
-            has_painting: None,
         }
     }
 
@@ -383,11 +386,22 @@ impl LupusPlayer {
     pub fn kill(&mut self) -> Result<(), KillError> {
         match self {
             Self {
-                has_painting: Some(user_id),
+                role:
+                    LupusRole::DORIANGREY {
+                        given_to: Some(quadro_target),
+                        has_quadro: true,
+                    },
                 ..
-            } => Err(KillError::HasPainting {
-                from: user_id.clone(),
-            }),
+            } => {
+                self.role = LupusRole::DORIANGREY {
+                    given_to: None,
+                    has_quadro: false,
+                };
+
+                Err(KillError::DorianGray {
+                    target: quadro_target.clone(),
+                })
+            }
             Self {
                 role: LupusRole::CRICETO,
                 ..
@@ -406,11 +420,21 @@ impl LupusPlayer {
     pub fn guard_kill(&mut self) -> Result<(), KillError> {
         match self {
             Self {
-                has_painting: Some(user_id),
+                role:
+                    LupusRole::DORIANGREY {
+                        given_to: Some(quadro_target),
+                        has_quadro: true,
+                    },
                 ..
-            } => Err(KillError::HasPainting {
-                from: user_id.clone(),
-            }),
+            } => {
+                self.role = LupusRole::DORIANGREY {
+                    given_to: None,
+                    has_quadro: false,
+                };
+                Err(KillError::DorianGray {
+                    target: quadro_target.clone(),
+                })
+            }
             Self {
                 role: LupusRole::SERIALKILLER,
                 ..
@@ -424,8 +448,22 @@ impl LupusPlayer {
 
     fn cleanup(&mut self) {
         self.framed = false;
-        self.has_painting = None;
         self.is_protected = false;
         self.role_blocked = false;
+        match self.role {
+            LupusRole::STREGA(role) => {
+                *role = LupusRole::NOTASSIGNED;
+            }
+            LupusRole::DORIANGREY {
+                given_to,
+                has_quadro,
+            } => {
+                self.role = LupusRole::DORIANGREY {
+                    given_to: None,
+                    has_quadro,
+                }
+            }
+            _ => (),
+        }
     }
 }
