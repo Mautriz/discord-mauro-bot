@@ -1,12 +1,12 @@
 use serenity::prelude::TypeMap;
 use tokio::sync::{RwLockReadGuard, RwLockWriteGuard};
 
-use super::context::{LupusCtx, LupusManager, Tag};
+use super::context::{LupusCtx, LupusManager, LupusPlayer, Tag};
 use serenity::async_trait;
 
 use crate::domain::lupus::roles::LupusAction;
 use crate::domain::msg_ext::MessageExt;
-use serenity::framework::standard::{Args, CommandResult};
+use serenity::framework::standard::CommandResult;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
@@ -46,6 +46,7 @@ impl LupusCtxHelper {
 pub trait LupusHelpers {
     async fn lupus(&self) -> RwLockReadGuard<LupusManager>;
     async fn lupus_mut(&self) -> RwLockWriteGuard<LupusManager>;
+    async fn get_player(&self, guild_id: &GuildId, uid: &UserId) -> Option<LupusPlayer>;
 }
 
 #[async_trait]
@@ -56,5 +57,18 @@ impl LupusHelpers for RwLockReadGuard<'_, TypeMap> {
 
     async fn lupus_mut(&self) -> RwLockWriteGuard<LupusManager> {
         self.get::<LupusCtx>().unwrap().write().await
+    }
+
+    async fn get_player(&self, guild_id: &GuildId, uid: &UserId) -> Option<LupusPlayer> {
+        let lupus = self.lupus().await;
+        let game = lupus.get_game(guild_id);
+
+        if let Some(gm) = game {
+            let gm_reader = gm.read().await;
+            let player = gm_reader.get_player(uid);
+            player.cloned()
+        } else {
+            None
+        }
     }
 }

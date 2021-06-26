@@ -16,7 +16,7 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
         LupusRole::VILLICO,
         LupusRole::STREGA(Box::new(LupusRole::NOTASSIGNED)),
         LupusRole::INDEMONIATO,
-        LupusRole::VIGILANTE,
+        LupusRole::VIGILANTE { has_shot: false },
         LupusRole::DORIANGREY,
         LupusRole::SERIALKILLER,
         LupusRole::PUTTANA,
@@ -31,7 +31,6 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
         .filter(|(i, _)| i < &player_number)
         .map(|(_, role)| role)
         .collect::<Vec<LupusRole>>();
-
     filtered_roles.shuffle(&mut rng);
 
     filtered_roles

@@ -1,8 +1,5 @@
-use std::collections::vec_deque::Iter;
 use std::convert::TryInto;
 use std::{collections::HashMap, sync::Arc};
-
-use crate::domain::error::MyError;
 
 use super::roles::{LupusAction, LupusRole, Nature};
 use super::roles_per_players;
@@ -112,14 +109,40 @@ impl LupusManager {
                 if let Some(role) = rng_roles.pop() {
                     println!("{:?} - {:?}", player.clone(), role.clone());
                     let ch = player_id.create_dm_channel(&ctx.http).await.unwrap();
+                    player.role = role;
+
                     let _ = ch
                         .say(
                             &ctx.http,
                             format!("Il tuo ruolo è: {:?}", player.role.clone()),
                         )
                         .await;
-                    player.role = role;
                 }
+            }
+
+            let wolfs_iter = game_writer
+                .joined_players
+                .iter()
+                .filter(|(_a, b)| match b.role {
+                    LupusRole::WOLF { .. } | LupusRole::GUFO => true,
+                    _ => false,
+                });
+
+            let wolf_names = wolfs_iter.clone().map(|(uid, player)| {
+                let tag = self.get_tag_from_id(uid).unwrap().0.clone();
+                format!("tag: {:?}, role: {:?}", tag, player.role.clone())
+            });
+
+            let wolf_name_str = wolf_names.collect::<Vec<String>>().join(" - ");
+
+            for (uid, _) in wolfs_iter.clone() {
+                let ch = uid.create_dm_channel(&ctx.http).await.unwrap();
+                let _ = ch
+                    .say(
+                        &ctx.http,
+                        format!("I lupotti sono: {:?}", wolf_name_str.clone()),
+                    )
+                    .await;
             }
         }
     }

@@ -25,7 +25,7 @@ pub enum LupusRole {
     VEGGENTE,
     CRICETO,
     BODYGUARD { self_protected: bool },
-    VIGILANTE,
+    VIGILANTE { has_shot: bool },
     MEDIUM,
     GUFO,
     DORIANGREY,
@@ -62,7 +62,7 @@ impl LupusRole {
             // | Self::ANGELO
             | Self::CRICETO
             | Self::BODYGUARD { .. }
-            | Self::VIGILANTE
+            | Self::VIGILANTE { .. }
             | Self::MEDIUM
             | Self::DORIANGREY
             | Self::VILLICO
@@ -81,7 +81,7 @@ impl LupusRole {
         match self {
             Self::VEGGENTE
             | Self::BODYGUARD { .. }
-            | Self::VIGILANTE
+            | Self::VIGILANTE { .. }
             | Self::MEDIUM
             | Self::DORIANGREY
             | Self::VILLICO

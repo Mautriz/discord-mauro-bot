@@ -14,6 +14,10 @@ pub async fn ping(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResul
         )
         .await?;
 
+    let dm = msg.author.id.create_dm_channel(&ctx.http).await?;
+
+    let _ = dm.say(&ctx.http, "ciaooo").await;
+
     while let Some(reaction) = sent_msg
         .await_reaction(&ctx)
         .timeout(Duration::from_secs(30))

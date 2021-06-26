@@ -23,14 +23,17 @@ The file should contain:
 ### Todo
 
 SUPER MEGA WIPPONE DEVASTANTANTE MORTALE DEVO ANCORA FARE UN BOTTO DI ROBA
-- Esecuzione singole azioni di gioco
 - Check validitá dei singoli comandi dai giocatori
-- Aggiungere regole per checkare se il game è finito/qualcuno ha vinto a fine giorno/notte
-- Capire come aprire chat private di gruppo
-- Cercare di capire come testare questa roba
-- Capire come refactorare i vari read nestati dei RwLock perchè c'é un botto di codice duplicato pessimo
-
+- Check funzionamento effettivo del gioco
+- Migliorare i messaggi mandati ai giocatori
+- Mandare i messaggi mancanti in pvt (Medium, Veggente)
 
 ##### Specifiche da aggiungere singoli elementi
 - Lupi: a fine giornata contare i wolfvote e provare a killare quello con più voti (in caso di pareggio di voti, uno a caso tra quelli nel pareggio)
 - Kill: se kill colpisce una persona protetta, non deve ucciderla, se kill colpisce Dorian Grey, deve cercare la persona col quadro e uccidere lui
+
+
+## Da migliorare
+- Ci sono un sacco di unwrap, non dovrebbero esserci (se non quando si può dare per certo che l'unwrap vada a buon fine, ex: guild_id nei comandi solo per canali guild), dovrebbero essere gestiti tutti gli errori
+- Tutti questi lock mi hanno reso la vita difficile, sono da ridurre al minimo tutti i tempi di lock (già fixati un paio di deadlock, probabilmente ne troverò altri), ho usato lock al posto di un db/cache tipo redis/pg perché più performante (tanto c'è lo sharding)
+- Non ho idea di come  testare questa roba, ne a mano (avendo bisogno di almeno 8 player) ne con test automatici

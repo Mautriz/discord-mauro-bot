@@ -9,7 +9,7 @@ mod kill;
 mod possess;
 mod protect;
 mod roleblock;
-mod shot;
+mod shoot;
 mod start_vote;
 mod truesight;
 mod wolfvote;
@@ -21,7 +21,7 @@ use kill::*;
 use possess::*;
 use protect::*;
 use roleblock::*;
-use shot::*;
+use shoot::*;
 use start_vote::*;
 use truesight::*;
 use wolfvote::*;
@@ -38,7 +38,7 @@ use wolfvote::*;
     possess,
     start_vote,
     heal,
-    shot
+    shoot
 )]
 pub async fn action(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let _ = msg

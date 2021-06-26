@@ -10,9 +10,9 @@ use crate::domain::msg_ext::MessageExt;
 #[only_in(guilds)]
 pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let data = ctx.data.read().await;
-    let (user_id, guild_id) = msg.get_ids();
+    let (_, guild_id) = msg.get_ids();
 
-    let user = user_id.to_user(&ctx.http).await?;
+    // let user = user_id.to_user(&ctx.http).await?;
     // let dm_channel = user.create_dm_channel(&ctx.http).await?;
 
     // Unwrap is always safe, as LupusCtx is defined in the general context of the main application

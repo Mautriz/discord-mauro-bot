@@ -8,7 +8,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 #[command]
-pub async fn kill(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+pub async fn shoot(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let target_tag: String = args.single()?;
     let (user_id, guild_id) = msg.get_ids();
     let (target_id, _) = LupusCtxHelper::parse_tag_to_target_id(ctx, Tag(target_tag))
@@ -21,14 +21,13 @@ pub async fn kill(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
     };
 
     if let Some(p) = player {
-        if let LupusRole::SERIALKILLER = *p.role() {
-            LupusCtxHelper::send_lupus_command(ctx, msg, LupusAction::Kill(target_id)).await?
+        if let LupusRole::VIGILANTE { has_shot: false } = *p.role() {
+            LupusCtxHelper::send_lupus_command(ctx, msg, LupusAction::GuardShot(target_id)).await?
         } else {
             msg.channel_id
-                .say(&ctx.http, "fra... ruolo sbagliato")
+                .say(&ctx.http, "fra... o non sei un vigilante o ha già sparato")
                 .await?;
         }
     }
-
     Ok(())
 }

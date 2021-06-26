@@ -5,6 +5,7 @@ use serenity::prelude::*;
 use crate::domain::lupus::context::LupusCtx;
 
 #[command]
+#[owners_only]
 pub async fn stats(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let guild_id = msg.guild_id.unwrap();
 
