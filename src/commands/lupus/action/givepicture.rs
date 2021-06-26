@@ -1,7 +1,7 @@
 use crate::domain::error::MyError;
 use crate::domain::lupus::context::Tag;
 use crate::domain::lupus::context_ext::{LupusCtxHelper, LupusHelpers};
-use crate::domain::lupus::roles::{LupusAction, LupusRole};
+use crate::domain::lupus::roles::LupusRole;
 use crate::domain::msg_ext::MessageExt;
 use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;

@@ -257,7 +257,7 @@ impl LupusGame {
             LupusAction::GuardShot(user_id) => {
                 let mut target_id = user_id;
                 loop {
-                    let player_option = self.joined_players.get_mut(&user_id);
+                    let player_option = self.joined_players.get_mut(&target_id);
                     if let Some(player) = player_option {
                         if let Err(KillError::DorianGray { target }) = player.guard_kill() {
                             target_id = target;
@@ -272,7 +272,7 @@ impl LupusGame {
             LupusAction::Kill(user_id) | LupusAction::WolfVote(user_id) => {
                 let mut target_id = user_id;
                 loop {
-                    let player_option = self.joined_players.get_mut(&user_id);
+                    let player_option = self.joined_players.get_mut(&target_id);
                     if let Some(player) = player_option {
                         if let Err(KillError::DorianGray { target }) = player.kill() {
                             target_id = target;
@@ -384,7 +384,7 @@ impl LupusPlayer {
     }
 
     pub fn kill(&mut self) -> Result<(), KillError> {
-        match self.current_role() {
+        match self.current_role().to_owned() {
             LupusRole::DORIANGREY {
                 given_to: Some(quadro_target),
                 has_quadro: true,
@@ -408,7 +408,7 @@ impl LupusPlayer {
     }
 
     pub fn guard_kill(&mut self) -> Result<(), KillError> {
-        match self.current_role() {
+        match self.current_role().to_owned() {
             LupusRole::DORIANGREY {
                 given_to: Some(quadro_target),
                 has_quadro: true,
@@ -433,14 +433,11 @@ impl LupusPlayer {
         self.framed = false;
         self.is_protected = false;
         self.role_blocked = false;
-        match self.role {
-            LupusRole::STREGA(role) => {
-                *role = LupusRole::NOTASSIGNED;
+        match self.role.clone() {
+            LupusRole::STREGA(_) => {
+                self.role = LupusRole::STREGA(Box::new(LupusRole::NOTASSIGNED));
             }
-            LupusRole::DORIANGREY {
-                given_to,
-                has_quadro,
-            } => {
+            LupusRole::DORIANGREY { has_quadro, .. } => {
                 self.role = LupusRole::DORIANGREY {
                     given_to: None,
                     has_quadro,
