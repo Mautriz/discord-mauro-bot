@@ -67,7 +67,6 @@ impl LupusRole {
     pub fn get_nature(&self) -> Nature {
         match self {
             Self::VEGGENTE
-            // | Self::ANGELO
             | Self::CRICETO
             | Self::BODYGUARD { .. }
             | Self::VIGILANTE { .. }
@@ -77,10 +76,8 @@ impl LupusRole {
             | Self::SEXWORKER
             | Self::DOTTORE { .. }
             | Self::INDEMONIATO => Nature::GOOD,
-            Self::WOLF {..} | Self::SERIALKILLER  | Self::GUFO => Nature::EVIL,
-            | Self::STREGA(inner) => {
-                inner.get_nature()
-            }
+            Self::WOLF { .. } | Self::SERIALKILLER | Self::GUFO => Nature::EVIL,
+            Self::STREGA(inner) => inner.get_nature(),
             _ => Nature::UNKNOWN,
         }
     }

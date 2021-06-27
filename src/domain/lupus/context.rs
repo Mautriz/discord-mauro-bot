@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::domain::lupus::player::LupusPlayer;
 
-use super::game::LupusGame;
+use super::game::{GamePhase, LupusGame};
 use super::roles::LupusRole;
 use super::roles_per_players;
 use serenity::model::prelude::*;
@@ -36,15 +36,22 @@ impl LupusManager {
     pub async fn handle_night(&self, guild_id: &GuildId, ctx: &Context) {
         // Aspetta l'evento
         let game = self.get_game(guild_id).unwrap();
-        let mut game_writer = game.write().await;
-        game_writer.process_actions(ctx).await;
-        game_writer.cleanup();
+        {
+            let mut game_writer = game.write().await;
+            game_writer.process_actions(ctx).await;
+            game_writer.cleanup();
+            game_writer.set_phase(GamePhase::DAY)
+        }
         let game_read = game.read().await;
         game_read.check_if_ended().await;
     }
 
     pub async fn handle_day(&self, guild_id: &GuildId) {
         let game = self.get_game(guild_id).unwrap();
+        {
+            let mut game_writer = game.write().await;
+            game_writer.set_phase(GamePhase::NIGHT)
+        }
         let game_read = game.read().await;
         game_read.check_if_ended().await;
     }

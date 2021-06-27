@@ -12,11 +12,18 @@ use super::roles::LupusAction;
 use super::roles::LupusRole;
 
 #[derive(Debug)]
+pub enum GamePhase {
+    FIRSTNIGHT,
+    NIGHT,
+    DAY,
+}
+
+#[derive(Debug)]
 pub struct LupusGame {
     action_buffer: HashMap<UserId, LupusAction>,
     pub joined_players: HashMap<UserId, LupusPlayer>,
     message_sender: Sender<GameMessage>,
-    is_first_night: bool,
+    game_phase: GamePhase,
 }
 
 impl LupusGame {
@@ -25,8 +32,12 @@ impl LupusGame {
             message_sender: tx,
             action_buffer: HashMap::new(),
             joined_players: HashMap::new(),
-            is_first_night: false,
+            game_phase: GamePhase::FIRSTNIGHT,
         }
+    }
+
+    pub fn set_phase(&mut self, phase: GamePhase) {
+        self.game_phase = phase
     }
 
     pub fn get_alive_players(&self) -> impl Iterator<Item = (&UserId, &LupusPlayer)> {
@@ -48,7 +59,7 @@ impl LupusGame {
     pub async fn push_night_action(&mut self, user_id: UserId, cmd: LupusAction) {
         self.action_buffer.insert(user_id, cmd);
 
-        let required_uids: Vec<_> = if self.is_first_night {
+        let required_uids: Vec<_> = if matches!(self.game_phase, GamePhase::FIRSTNIGHT) {
             self.joined_players
                 .iter()
                 .filter(|(_uid, player)| player.role().can_action_fist_night())
@@ -66,7 +77,6 @@ impl LupusGame {
             .iter()
             .all(|uid| self.action_buffer.iter().any(|(auid, _)| *auid == **uid))
         {
-            self.is_first_night = false;
             let _ = self.message_sender.send(GameMessage::NIGHTEND).await;
         }
     }

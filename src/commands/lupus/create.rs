@@ -23,7 +23,7 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
     };
 
     msg.channel_id
-        .say(&ctx.http, format!("Partita creata con successo"))
+        .say(&ctx.http, "Partita creata con successo")
         .await?;
 
     while let Some(game_message) = rx.recv().await {
@@ -32,10 +32,12 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
             GameMessage::NIGHTEND => {
                 let lupus = data.lupus().await;
                 lupus.handle_night(&guild_id, ctx).await;
+                msg.channel_id.say(&ctx.http, "La notte è finita").await?;
             }
             GameMessage::DAYEND => {
                 let lupus = data.lupus().await;
                 lupus.handle_day(&guild_id).await;
+                msg.channel_id.say(&ctx.http, "Il giorno è finito").await?;
             }
             GameMessage::GAMEEND => {
                 let mut lupus = data.lupus_mut().await;
@@ -43,7 +45,13 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
                 let gm_reader = game.read().await;
 
                 msg.channel_id
-                    .say(&ctx.http, format!("{:?}", gm_reader.joined_players))
+                    .say(
+                        &ctx.http,
+                        format!(
+                            "La partita è finita, questi sono tutti i player: {:?}",
+                            gm_reader.joined_players
+                        ),
+                    )
                     .await?;
             }
         };
