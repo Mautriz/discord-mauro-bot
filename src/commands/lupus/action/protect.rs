@@ -9,27 +9,12 @@ use serenity::prelude::*;
 #[command]
 #[only_in(dms)]
 pub async fn protect(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    let target_tag: String = args.single()?;
-
-    let (user_id, guild_id) = LupusCtxHelper::parse_id_to_guild_id(ctx, &msg.author.id).await?;
-
-    let (target_id, _) = LupusCtxHelper::parse_tag_to_target_id(ctx, Tag(target_tag))
-        .await
-        .ok_or(MyError)?;
-
-    let player = {
-        let dt = ctx.data.read().await;
-        dt.get_player(&guild_id, &user_id).await
-    };
-
-    if let Some(p) = player {
-        if let LupusRole::BODYGUARD { .. } = *p.role() {
-            LupusCtxHelper::send_lupus_command(ctx, msg, LupusAction::Protect(target_id)).await?
-        } else {
-            msg.channel_id
-                .say(&ctx.http, "fra... controlla il ruolo va")
-                .await?;
-        }
-    }
-    Ok(())
+    LupusCtxHelper::generic_action(
+        ctx,
+        msg,
+        args,
+        |role| matches!(role, LupusRole::BODYGUARD { .. }),
+        |target_id| LupusAction::Protect(target_id),
+    )
+    .await
 }

@@ -38,7 +38,9 @@ pub enum LupusRole {
     },
     SEXWORKER,
     SERIALKILLER,
-    DOTTORE,
+    DOTTORE {
+        has_healed: bool,
+    },
     INDEMONIATO,
     STREGA(Box<LupusRole>),
     VILLICO,
@@ -73,7 +75,7 @@ impl LupusRole {
             | Self::DORIANGREY { .. }
             | Self::VILLICO
             | Self::SEXWORKER
-            | Self::DOTTORE
+            | Self::DOTTORE { .. }
             | Self::INDEMONIATO => Nature::GOOD,
             Self::WOLF {..} | Self::SERIALKILLER  | Self::GUFO => Nature::EVIL,
             | Self::STREGA(inner) => {
@@ -92,7 +94,7 @@ impl LupusRole {
             | Self::DORIANGREY { .. }
             | Self::VILLICO
             | Self::SEXWORKER
-            | Self::DOTTORE => true,
+            | Self::DOTTORE { .. } => true,
             _ => false,
         }
     }
@@ -123,6 +125,7 @@ pub enum LupusAction {
     RoleBlock(UserId),
     Frame(UserId),
     Protect(UserId),
+    GiveQuadro(UserId),
     GuardShot(UserId),
     Kill(UserId),
     WolfVote(UserId),

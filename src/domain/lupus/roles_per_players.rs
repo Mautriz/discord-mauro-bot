@@ -23,7 +23,7 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
         },
         LupusRole::SERIALKILLER,
         LupusRole::SEXWORKER,
-        LupusRole::DOTTORE,
+        LupusRole::DOTTORE { has_healed: false },
         LupusRole::WOLF { is_leader: false },
         LupusRole::CRICETO,
     ];

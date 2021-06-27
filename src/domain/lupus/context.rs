@@ -342,8 +342,19 @@ impl LupusGame {
                 }
             }
             LupusAction::Heal(user_id) => {
+                if let Some(player) = self.joined_players.get_mut(&action.0) {
+                    player.role = LupusRole::DOTTORE { has_healed: true }
+                }
                 if let Some(target) = self.joined_players.get_mut(&user_id) {
                     target.alive = true;
+                }
+            }
+            LupusAction::GiveQuadro(target_id) => {
+                if let Some(player) = self.joined_players.get_mut(&action.0) {
+                    player.set_current_role(LupusRole::DORIANGREY {
+                        has_quadro: true,
+                        given_to: Some(target_id),
+                    })
                 }
             }
             LupusAction::GuardShot(user_id) => self.guard_kill_loop(user_id),

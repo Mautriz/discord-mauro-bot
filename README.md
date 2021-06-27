@@ -29,7 +29,6 @@ SUPER MEGA WIPPONE DEVASTANTANTE MORTALE DEVO ANCORA FARE UN BOTTO DI ROBA
 - Mandare i messaggi mancanti in pvt (Medium, Veggente)
 
 ##### Specifiche da aggiungere singoli elementi
-- Lupi: a fine giornata contare i wolfvote e provare a killare quello con più voti (in caso di pareggio di voti, uno a caso tra quelli nel pareggio)
 - Kill: se kill colpisce una persona protetta, non deve ucciderla, se kill colpisce Dorian Grey, deve cercare la persona col quadro e uccidere lui
 
 
