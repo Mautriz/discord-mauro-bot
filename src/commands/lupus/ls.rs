@@ -18,7 +18,7 @@ pub async fn ls(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult 
             .collect();
 
         msg.channel_id
-            .say(&ctx.http, format!("Player in game: {:?}", player_tag_list))
+            .say(&ctx.http, format!("Players in game: {:?}", player_tag_list))
             .await?;
     }
 

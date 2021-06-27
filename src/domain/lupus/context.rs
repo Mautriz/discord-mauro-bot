@@ -1,4 +1,6 @@
 use std::convert::TryInto;
+use std::error::Error;
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::{collections::HashMap, sync::Arc};
 
 use super::roles::{LupusAction, LupusRole, Nature};
@@ -57,6 +59,11 @@ impl LupusManager {
 
     pub fn user_id_to_guild_id(&self, uid: &UserId) -> Option<&GuildId> {
         self.user_to_guild.get(uid)
+    }
+
+    pub fn close_game(&mut self, guild_id: &GuildId) -> Option<Arc<RwLock<LupusGame>>> {
+        let game = self.games.remove(guild_id)?;
+        Some(game)
     }
 
     pub fn get_tag_from_id(&self, user_id: &UserId) -> Option<&Tag> {
@@ -155,7 +162,9 @@ impl LupusManager {
 
 #[derive(Clone, Debug)]
 pub enum GameMessage {
+    // Chiamato quando tutti hanno fatto un'azione
     NIGHTEND,
+    // Chiamato a fine voto
     DAYEND,
     GAMEEND,
 }
@@ -178,13 +187,12 @@ impl LupusGame {
         }
     }
 
+    pub fn get_alive_players(&self) -> impl Iterator<Item = (&UserId, &LupusPlayer)> {
+        self.joined_players.iter().filter(|(_, p)| p.alive)
+    }
+
     pub fn get_alive_players_count(&self) -> u32 {
-        self.joined_players
-            .iter()
-            .filter(|(_, p)| p.alive)
-            .count()
-            .try_into()
-            .unwrap()
+        self.get_alive_players().count().try_into().unwrap()
     }
 
     pub fn get_player(&self, player_id: &UserId) -> Option<&LupusPlayer> {
@@ -232,6 +240,60 @@ impl LupusGame {
         self.message_sender.send(GameMessage::GAMEEND).await
     }
 
+    pub fn kill_loop(&mut self, uid: UserId) {
+        let mut target_id = uid.to_owned();
+        loop {
+            let player_option = self.joined_players.get_mut(&target_id);
+            if let Some(player) = player_option {
+                if let Err(KillError::DorianGray { target }) = player.kill() {
+                    target_id = target;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    pub fn guard_kill_loop(&mut self, uid: UserId) {
+        let mut target_id = uid.to_owned();
+        loop {
+            let player_option = self.joined_players.get_mut(&target_id);
+            if let Some(player) = player_option {
+                if let Err(KillError::DorianGray { target }) = player.guard_kill() {
+                    target_id = target;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    pub fn vote_kill_loop(&mut self, uid: UserId) -> Result<UserId, KillError> {
+        let mut target_id = uid.to_owned();
+        loop {
+            let player_option = self.joined_players.get_mut(&target_id);
+            if let Some(player) = player_option {
+                if let Err(err) = player.vote_kill() {
+                    if let KillError::DorianGray { target } = err {
+                        target_id = target;
+                    } else {
+                        return Err(err);
+                    }
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        Ok(target_id)
+    }
+
     async fn check_if_ended(&self) -> bool {
         let alive_players = self
             .joined_players
@@ -239,12 +301,13 @@ impl LupusGame {
             .filter(|(_, player)| player.alive);
 
         let good_players_count = alive_players
+            .clone()
             .filter(|(_, player)| player.role.is_actually_good())
             .count();
 
         // Vincono i lupi o vince il rimanente
-        if good_players_count <= 1 || good_players_count == 0 {
-            let result = self.message_sender.send(GameMessage::GAMEEND).await;
+        if alive_players.count() <= 1 || good_players_count == 0 {
+            let result = self.game_end().await;
             if let Err(_err) = result {
                 println!("Non sono riuscito a terminare il game con successo");
             }
@@ -283,36 +346,8 @@ impl LupusGame {
                     target.alive = true;
                 }
             }
-            LupusAction::GuardShot(user_id) => {
-                let mut target_id = user_id;
-                loop {
-                    let player_option = self.joined_players.get_mut(&target_id);
-                    if let Some(player) = player_option {
-                        if let Err(KillError::DorianGray { target }) = player.guard_kill() {
-                            target_id = target;
-                        } else {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
-                }
-            }
-            LupusAction::Kill(user_id) | LupusAction::WolfVote(user_id) => {
-                let mut target_id = user_id;
-                loop {
-                    let player_option = self.joined_players.get_mut(&target_id);
-                    if let Some(player) = player_option {
-                        if let Err(KillError::DorianGray { target }) = player.kill() {
-                            target_id = target;
-                        } else {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
-                }
-            }
+            LupusAction::GuardShot(user_id) => self.guard_kill_loop(user_id),
+            LupusAction::Kill(user_id) | LupusAction::WolfVote(user_id) => self.kill_loop(user_id),
             LupusAction::Protect(user_id) => {
                 if let Some(target) = self.joined_players.get_mut(&user_id) {
                     if let LupusRole::BODYGUARD { self_protected } = target.role {
@@ -365,10 +400,19 @@ pub struct LupusPlayer {
     is_protected: bool,
 }
 
+#[derive(Debug)]
 pub enum KillError {
     DorianGray { target: UserId },
     UnkillableTarget,
+    IsProtected,
 }
+
+impl Display for KillError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{:?}", self)
+    }
+}
+impl Error for KillError {}
 
 impl LupusPlayer {
     fn new() -> Self {
@@ -381,7 +425,7 @@ impl LupusPlayer {
         }
     }
 
-    fn get_nature(&self) -> Nature {
+    pub fn get_nature(&self) -> Nature {
         if self.framed {
             Nature::EVIL
         } else {
@@ -409,11 +453,10 @@ impl LupusPlayer {
         }
     }
 
-    pub fn force_kill(&mut self) {
-        self.alive = false
-    }
-
     pub fn kill(&mut self) -> Result<(), KillError> {
+        if self.is_protected {
+            return Err(KillError::IsProtected);
+        }
         match self.current_role().to_owned() {
             LupusRole::DORIANGREY {
                 given_to: Some(quadro_target),
@@ -438,6 +481,9 @@ impl LupusPlayer {
     }
 
     pub fn guard_kill(&mut self) -> Result<(), KillError> {
+        if self.is_protected {
+            return Err(KillError::IsProtected);
+        }
         match self.current_role().to_owned() {
             LupusRole::DORIANGREY {
                 given_to: Some(quadro_target),
@@ -452,6 +498,27 @@ impl LupusPlayer {
                 })
             }
             LupusRole::SERIALKILLER => Err(KillError::UnkillableTarget),
+            _ => {
+                self.alive = false;
+                Ok(())
+            }
+        }
+    }
+
+    pub fn vote_kill(&mut self) -> Result<(), KillError> {
+        match self.current_role().to_owned() {
+            LupusRole::DORIANGREY {
+                given_to: Some(quadro_target),
+                has_quadro: true,
+            } => {
+                self.set_current_role(LupusRole::DORIANGREY {
+                    given_to: None,
+                    has_quadro: false,
+                });
+                Err(KillError::DorianGray {
+                    target: quadro_target.clone(),
+                })
+            }
             _ => {
                 self.alive = false;
                 Ok(())

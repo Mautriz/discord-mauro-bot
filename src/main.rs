@@ -20,8 +20,8 @@ use serenity::{
 use songbird::SerenityInit;
 use std::{collections::HashSet, env, sync::Arc};
 
-use tracing::{error, info};
-use tracing_subscriber::{EnvFilter, FmtSubscriber};
+use tracing::{error, info, Level};
+use tracing_subscriber;
 
 use commands::{invito::*, lupus::*, ping::*, random::*, suona::*, vote::*};
 
@@ -73,13 +73,18 @@ async fn main() {
     //
     // In this case, a good default is setting the environment variable
     // `RUST_LOG` to debug`.
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(EnvFilter::from_default_env())
+    let collector = tracing_subscriber::fmt()
+        // filter spans/events with level TRACE or higher.
+        .with_max_level(Level::INFO)
+        // build but do not install the subscriber.
         .finish();
-    tracing::subscriber::set_global_default(subscriber).expect("Failed to start the logger");
+
+    tracing::subscriber::set_global_default(collector).expect("Failed to start the logger");
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let http = Http::new_with_token(&token);
+
+    info!("ciaooo");
 
     // We will fetch your bot's owners and id
     let (owners, _bot_id) = match http.get_current_application_info().await {

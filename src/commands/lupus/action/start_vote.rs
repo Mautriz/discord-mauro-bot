@@ -48,7 +48,7 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
     let reacts = sent_msg
         .await_reactions(ctx)
         .collect_limit(number_of_player_alive.into())
-        .timeout(Duration::from_secs(30))
+        .timeout(Duration::from_secs(60))
         .await
         .collect::<Vec<Arc<ReactionAction>>>()
         .await;
@@ -75,20 +75,41 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
         .unwrap_or(&0);
 
     let result = if yes_count > no_count {
-        let mut game_writer = game.write().await;
-        let player = game_writer.get_player_mut(&target_id).ok_or(MyError)?;
-        let _ = player.force_kill();
-
-        if let LupusRole::CRICETO = player.role() {
-            game_writer.game_end().await?
-        }
-
         YES_CIRCLE
     } else if yes_count < no_count {
         NO_CIRCLE
     } else {
         ASTENUTO_CIRCLE
     };
+
+    if result == YES_CIRCLE {
+        let killed_player = {
+            let mut game_writer = game.write().await;
+            let killed_id = game_writer.vote_kill_loop(target_id)?;
+            game_writer
+                .get_player(&killed_id)
+                .ok_or(MyError)?
+                .to_owned()
+        };
+
+        let game_reader = game.read().await;
+        let maybe_player = game_reader
+            .get_alive_players()
+            .find(|(_, player)| matches!(player.role(), &LupusRole::VEGGENTE))
+            .map(|(uid, _)| uid);
+
+        if let Some(player) = maybe_player {
+            let ch = player.create_dm_channel(&ctx.http).await?;
+            ch.say(
+                &ctx.http,
+                format!(
+                    "fra vedi che il tizio morto era {:?}",
+                    killed_player.get_nature()
+                ),
+            )
+            .await?;
+        }
+    }
 
     game.read().await.day_end().await;
 

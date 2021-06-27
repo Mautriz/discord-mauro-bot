@@ -2,11 +2,12 @@ use serenity::prelude::TypeMap;
 use tokio::sync::{RwLockReadGuard, RwLockWriteGuard};
 
 use super::context::{LupusCtx, LupusManager, LupusPlayer, Tag};
+use super::roles::LupusRole;
 use serenity::async_trait;
 
 use crate::domain::error::MyError;
 use crate::domain::lupus::roles::LupusAction;
-use serenity::framework::standard::CommandResult;
+use serenity::framework::standard::{Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
@@ -50,6 +51,40 @@ impl LupusCtxHelper {
         let guild_id = lupus.user_id_to_guild_id(uid).ok_or(MyError)?;
 
         Ok((uid.to_owned(), guild_id.to_owned()))
+    }
+
+    pub async fn generic_action(
+        ctx: &Context,
+        msg: &Message,
+        mut args: Args,
+        role_check: fn(LupusRole) -> bool,
+        action_create: fn(UserId) -> LupusAction,
+    ) -> CommandResult {
+        let target_tag: String = args.single()?;
+
+        let (user_id, guild_id) = LupusCtxHelper::parse_id_to_guild_id(ctx, &msg.author.id).await?;
+        let (target_id, _) = LupusCtxHelper::parse_tag_to_target_id(ctx, Tag(target_tag))
+            .await
+            .ok_or(MyError)?;
+
+        let player = {
+            let dt = ctx.data.read().await;
+            dt.get_player(&guild_id, &user_id).await
+        };
+
+        if let Some(p) = player {
+            if role_check(p.current_role().clone()) {
+                LupusCtxHelper::send_lupus_command(ctx, msg, action_create(target_id)).await?;
+                msg.channel_id
+                    .say(&ctx.http, "azione registrata con successo")
+                    .await?;
+            } else {
+                msg.channel_id
+                    .say(&ctx.http, "fra... ruolo sbagliato")
+                    .await?;
+            }
+        }
+        Ok(())
     }
 }
 

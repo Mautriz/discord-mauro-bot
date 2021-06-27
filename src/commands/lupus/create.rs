@@ -2,6 +2,7 @@ use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+use crate::domain::error::MyError;
 use crate::domain::lupus::context::GameMessage;
 use crate::domain::lupus::context_ext::LupusHelpers;
 use crate::domain::msg_ext::MessageExt;
@@ -25,18 +26,26 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
         .say(&ctx.http, format!("Partita creata con successo"))
         .await?;
 
-    while let Some(msg) = rx.recv().await {
-        println!("msg: {:?}", msg.clone());
-        match msg {
-            GameMessage::DAYEND => {
+    while let Some(game_message) = rx.recv().await {
+        println!("msg: {:?}", game_message.clone());
+        match game_message {
+            GameMessage::NIGHTEND => {
                 let lupus = data.lupus().await;
                 lupus.handle_night(&guild_id, ctx).await;
             }
-            GameMessage::NIGHTEND => {
+            GameMessage::DAYEND => {
                 let lupus = data.lupus().await;
                 lupus.handle_day(&guild_id).await;
             }
-            GameMessage::GAMEEND => (),
+            GameMessage::GAMEEND => {
+                let mut lupus = data.lupus_mut().await;
+                let game = lupus.close_game(&guild_id).ok_or(MyError)?;
+                let gm_reader = game.read().await;
+
+                msg.channel_id
+                    .say(&ctx.http, format!("{:?}", gm_reader.joined_players))
+                    .await?;
+            }
         };
     }
 
