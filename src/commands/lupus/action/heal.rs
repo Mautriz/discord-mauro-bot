@@ -2,7 +2,6 @@ use crate::domain::error::MyError;
 use crate::domain::lupus::context::Tag;
 use crate::domain::lupus::context_ext::{LupusCtxHelper, LupusHelpers};
 use crate::domain::lupus::roles::{LupusAction, LupusRole};
-use crate::domain::msg_ext::MessageExt;
 use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
@@ -11,7 +10,8 @@ use serenity::prelude::*;
 #[only_in(dms)]
 pub async fn heal(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let target_tag: String = args.single()?;
-    let (user_id, guild_id) = msg.get_ids();
+
+    let (user_id, guild_id) = LupusCtxHelper::parse_id_to_guild_id(ctx, &msg.author.id).await?;
     let (target_id, _) = LupusCtxHelper::parse_tag_to_target_id(ctx, Tag(target_tag))
         .await
         .ok_or(MyError)?;

@@ -55,6 +55,10 @@ impl LupusManager {
         Some((user_id, guild_id))
     }
 
+    pub fn user_id_to_guild_id(&self, uid: &UserId) -> Option<&GuildId> {
+        self.user_to_guild.get(uid)
+    }
+
     pub fn get_tag_from_id(&self, user_id: &UserId) -> Option<&Tag> {
         self.tag_to_user_id
             .iter()
@@ -462,12 +466,6 @@ impl LupusPlayer {
         match self.role.clone() {
             LupusRole::STREGA(_) => {
                 self.role = LupusRole::STREGA(Box::new(LupusRole::NOTASSIGNED));
-            }
-            LupusRole::DORIANGREY { has_quadro, .. } => {
-                self.role = LupusRole::DORIANGREY {
-                    given_to: None,
-                    has_quadro,
-                }
             }
             _ => (),
         }

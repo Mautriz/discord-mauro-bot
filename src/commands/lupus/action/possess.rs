@@ -6,7 +6,6 @@ use crate::domain::error::MyError;
 use crate::domain::lupus::context::Tag;
 use crate::domain::lupus::context_ext::{LupusCtxHelper, LupusHelpers};
 use crate::domain::lupus::roles::LupusRole;
-use crate::domain::msg_ext::MessageExt;
 
 #[command]
 #[only_in(dms)]
@@ -16,7 +15,7 @@ pub async fn possess(ctx: &Context, msg: &Message, mut args: Args) -> CommandRes
         .await
         .ok_or(MyError)?;
 
-    let (user_id, guild_id) = msg.get_ids();
+    let (user_id, guild_id) = LupusCtxHelper::parse_id_to_guild_id(ctx, &msg.author.id).await?;
     let data = ctx.data.read().await;
     let lupus = data.lupus().await;
     let game = lupus.get_game(&guild_id).ok_or(MyError)?;
