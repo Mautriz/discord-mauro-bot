@@ -23,7 +23,7 @@ The file should contain:
 ### Todo
 
 SUPER MEGA WIPPONE DEVASTANTANTE MORTALE DEVO ANCORA FARE UN BOTTO DI ROBA
-- Check validitá dei singoli comandi dai giocatori
+- Non posso usare il get_ids nei commandi dm
 - Check funzionamento effettivo del gioco
 - Migliorare i messaggi mandati ai giocatori
 - Mandare i messaggi mancanti in pvt (Medium, Veggente)

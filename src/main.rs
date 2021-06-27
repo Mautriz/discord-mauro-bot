@@ -18,14 +18,17 @@ use serenity::{
     prelude::*,
 };
 use songbird::SerenityInit;
-use std::{collections::HashSet, env, sync::Arc};
+use std::{collections::HashSet, env, fmt::Debug, sync::Arc};
 
-use tracing::{error, info};
+use tracing::{debug, error, field::debug, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use commands::{invito::*, lupus::*, ping::*, random::*, suona::*, vote::*};
 
-use crate::domain::lupus::context::{LupusCtx, LupusManager};
+use crate::domain::lupus::{
+    context::{LupusCtx, LupusManager},
+    roles::LupusRole,
+};
 
 pub struct ShardManagerContainer;
 
@@ -76,11 +79,9 @@ async fn main() {
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(EnvFilter::from_default_env())
         .finish();
-
     tracing::subscriber::set_global_default(subscriber).expect("Failed to start the logger");
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
-
     let http = Http::new_with_token(&token);
 
     // We will fetch your bot's owners and id

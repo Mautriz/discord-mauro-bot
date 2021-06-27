@@ -12,6 +12,7 @@ use crate::consts::{ASTENUTO_CIRCLE, NO_CIRCLE, YES_CIRCLE};
 use crate::domain::error::MyError;
 use crate::domain::lupus::context::Tag;
 use crate::domain::lupus::context_ext::{LupusCtxHelper, LupusHelpers};
+use crate::domain::lupus::roles::LupusRole;
 use crate::domain::msg_ext::MessageExt;
 
 #[command]
@@ -26,9 +27,7 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
     let data_read = ctx.data.read().await;
     let lupus_manager = data_read.lupus().await;
     let (_user_id, guild_id) = msg.get_ids();
-    let game = lupus_manager
-        .get_game(&guild_id)
-        .ok_or("Ciao".to_string())?;
+    let game = lupus_manager.get_game(&guild_id).ok_or(MyError)?;
 
     if guild_id != target_guild_id {
         println!("Different guild ids");
@@ -79,6 +78,10 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
         let mut game_writer = game.write().await;
         let player = game_writer.get_player_mut(&target_id).ok_or(MyError)?;
         let _ = player.force_kill();
+
+        if let LupusRole::CRICETO = player.role() {
+            game_writer.game_end().await?
+        }
 
         YES_CIRCLE
     } else if yes_count < no_count {

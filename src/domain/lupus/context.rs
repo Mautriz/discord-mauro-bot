@@ -5,6 +5,7 @@ use super::roles::{LupusAction, LupusRole, Nature};
 use super::roles_per_players;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 
 pub struct LupusCtx {}
@@ -160,6 +161,7 @@ pub struct LupusGame {
     action_buffer: HashMap<UserId, LupusAction>,
     pub joined_players: HashMap<UserId, LupusPlayer>,
     message_sender: Sender<GameMessage>,
+    is_first_night: bool,
 }
 
 impl LupusGame {
@@ -168,6 +170,7 @@ impl LupusGame {
             message_sender: tx,
             action_buffer: HashMap::new(),
             joined_players: HashMap::new(),
+            is_first_night: false,
         }
     }
 
@@ -191,6 +194,8 @@ impl LupusGame {
     pub async fn push_night_action(&mut self, user_id: UserId, cmd: LupusAction) {
         self.action_buffer.insert(user_id, cmd);
 
+        if self.is_first_night {}
+
         if self.action_buffer.iter().count() == self.joined_players.iter().count() {
             let _ = self.message_sender.send(GameMessage::NIGHTEND).await;
         }
@@ -201,6 +206,10 @@ impl LupusGame {
         if !has_ended {
             let _ = self.message_sender.send(GameMessage::DAYEND).await;
         }
+    }
+
+    pub async fn game_end(&self) -> Result<(), SendError<GameMessage>> {
+        self.message_sender.send(GameMessage::GAMEEND).await
     }
 
     async fn check_if_ended(&self) -> bool {
@@ -214,7 +223,7 @@ impl LupusGame {
             .count();
 
         // Vincono i lupi o vince il rimanente
-        if good_players_count == 1 || good_players_count == 0 {
+        if good_players_count <= 1 || good_players_count == 0 {
             let result = self.message_sender.send(GameMessage::GAMEEND).await;
             if let Err(_err) = result {
                 println!("Non sono riuscito a terminare il game con successo");
@@ -316,6 +325,7 @@ impl LupusGame {
                         .await;
                 }
             }
+            LupusAction::Pass => (),
         }
     }
 

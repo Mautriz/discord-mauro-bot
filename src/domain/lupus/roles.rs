@@ -12,7 +12,7 @@ use serenity::model::id::UserId;
 // MASSONI: villici che sanno il proprio reciproco ruolo; visti buoni dal veggente
 // DORIAN GREY: visto buono; ogni notte dà il quadro ad una persona; nel momento in cui il Dorian grey muore, muore al suo posto la persona in possesso del quadro; il quadro si annulla ogni notte; una volta perso il quadro, non lo ha più
 // VILLICO MANNARO: visto cattivo; nel momento in cui muore di notte (non dal vigilante o Dorian) diventa a sua volta un lupo
-// PUTTANA: vista buona; di notte va a letto con una persona  bloccando il ruolo della persona in questione
+// SEXWORKER: vista buona; di notte va a letto con una persona  bloccando il ruolo della persona in questione
 // SERIAL KILLER: visto cattivo; ogni notte può uccidere una persona, vince da solo; non muore di notte
 // DOTTORE: visto buono; una volta a game può resuscitare una persona
 // INDEMONIATO: villico visto buono; vince però se vincono i lupi;
@@ -36,14 +36,11 @@ pub enum LupusRole {
         has_quadro: bool,
         given_to: Option<UserId>,
     },
-    // VILLICOMANNARO,
-    PUTTANA,
+    SEXWORKER,
     SERIALKILLER,
     DOTTORE,
     INDEMONIATO,
     STREGA(Box<LupusRole>),
-    // ANGELO,
-    // AMNESIA,
     VILLICO,
     WOLF {
         is_leader: bool,
@@ -75,7 +72,7 @@ impl LupusRole {
             | Self::MEDIUM
             | Self::DORIANGREY { .. }
             | Self::VILLICO
-            | Self::PUTTANA
+            | Self::SEXWORKER
             | Self::DOTTORE
             | Self::INDEMONIATO => Nature::GOOD,
             Self::WOLF {..} | Self::SERIALKILLER  | Self::GUFO => Nature::EVIL,
@@ -94,8 +91,22 @@ impl LupusRole {
             | Self::MEDIUM
             | Self::DORIANGREY { .. }
             | Self::VILLICO
-            | Self::PUTTANA
+            | Self::SEXWORKER
             | Self::DOTTORE => true,
+            _ => false,
+        }
+    }
+
+    pub fn can_action(&self) -> bool {
+        match self {
+            Self::VILLICO => false,
+            _ => false,
+        }
+    }
+
+    pub fn can_action_fist_night(&self) -> bool {
+        match self {
+            Self::VEGGENTE | Self::GUFO | Self::STREGA(..) => true,
             _ => false,
         }
     }
@@ -117,4 +128,5 @@ pub enum LupusAction {
     WolfVote(UserId),
     TrueSight(UserId),
     Heal(UserId),
+    Pass,
 }

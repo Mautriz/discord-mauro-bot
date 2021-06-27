@@ -8,6 +8,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 #[command]
+#[only_in(dms)]
 pub async fn roleblock(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let target_tag: String = args.single()?;
     let (user_id, guild_id) = msg.get_ids();
@@ -21,7 +22,7 @@ pub async fn roleblock(ctx: &Context, msg: &Message, mut args: Args) -> CommandR
     };
 
     if let Some(p) = player {
-        if *p.role() != LupusRole::PUTTANA {
+        if *p.role() != LupusRole::SEXWORKER {
             msg.channel_id
                 .say(&ctx.http, "fra... ruolo sbagliato")
                 .await?;

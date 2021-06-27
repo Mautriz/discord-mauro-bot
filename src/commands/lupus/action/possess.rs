@@ -5,9 +5,11 @@ use serenity::prelude::*;
 use crate::domain::error::MyError;
 use crate::domain::lupus::context::Tag;
 use crate::domain::lupus::context_ext::{LupusCtxHelper, LupusHelpers};
+use crate::domain::lupus::roles::LupusRole;
 use crate::domain::msg_ext::MessageExt;
 
 #[command]
+#[only_in(dms)]
 pub async fn possess(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let target_tag: String = args.single()?;
     let (target_id, _) = LupusCtxHelper::parse_tag_to_target_id(ctx, Tag(target_tag))
@@ -22,9 +24,14 @@ pub async fn possess(ctx: &Context, msg: &Message, mut args: Args) -> CommandRes
     let game_reader = game.read().await;
     let target_player = game_reader.get_player(&target_id).ok_or(MyError)?;
 
+    // Se non è strega ritorna, brutto da guardare
+    if let LupusRole::STREGA(..) = target_player.role() {
+    } else {
+        return Ok(());
+    };
+
     let role = {
         let mut game_writer = game.write().await;
-        // let target_player = game_writer.get_player(&target_id).ok_or(MyError)?;
         let player_mut = game_writer.get_player_mut(&user_id).ok_or(MyError)?;
         player_mut.set_current_role(target_player.current_role().to_owned());
 

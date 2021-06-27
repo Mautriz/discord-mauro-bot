@@ -8,6 +8,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 #[command]
+#[only_in(dms)]
 pub async fn kill(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let target_tag: String = args.single()?;
     let (user_id, guild_id) = msg.get_ids();

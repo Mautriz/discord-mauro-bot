@@ -6,6 +6,7 @@ mod frame;
 mod givepicture;
 mod heal;
 mod kill;
+mod pass;
 mod possess;
 mod protect;
 mod roleblock;
@@ -18,6 +19,7 @@ use frame::*;
 use givepicture::*;
 use heal::*;
 use kill::*;
+use pass::*;
 use possess::*;
 use protect::*;
 use roleblock::*;
@@ -38,7 +40,8 @@ use wolfvote::*;
     possess,
     start_vote,
     heal,
-    shoot
+    shoot,
+    pass
 )]
 pub async fn action(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let _ = msg
