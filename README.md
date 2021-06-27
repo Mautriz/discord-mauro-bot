@@ -23,13 +23,9 @@ The file should contain:
 ### Todo
 
 SUPER MEGA WIPPONE DEVASTANTANTE MORTALE DEVO ANCORA FARE UN BOTTO DI ROBA
-- Non posso usare il get_ids nei commandi dm
+- Check di stato di gioco per registrazione comandi (giorno o notte)
 - Check funzionamento effettivo del gioco
 - Migliorare i messaggi mandati ai giocatori
-- Mandare i messaggi mancanti in pvt (Medium, Veggente)
-
-##### Specifiche da aggiungere singoli elementi
-- Kill: se kill colpisce una persona protetta, non deve ucciderla, se kill colpisce Dorian Grey, deve cercare la persona col quadro e uccidere lui
 
 
 ## Da migliorare
