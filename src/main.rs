@@ -18,17 +18,14 @@ use serenity::{
     prelude::*,
 };
 use songbird::SerenityInit;
-use std::{collections::HashSet, env, fmt::Debug, sync::Arc};
+use std::{collections::HashSet, env, sync::Arc};
 
-use tracing::{debug, error, field::debug, info};
+use tracing::{error, info};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use commands::{invito::*, lupus::*, ping::*, random::*, suona::*, vote::*};
 
-use crate::domain::lupus::{
-    context::{LupusCtx, LupusManager},
-    roles::LupusRole,
-};
+use crate::domain::lupus::context::{LupusCtx, LupusManager};
 
 pub struct ShardManagerContainer;
 

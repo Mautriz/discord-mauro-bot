@@ -194,9 +194,25 @@ impl LupusGame {
     pub async fn push_night_action(&mut self, user_id: UserId, cmd: LupusAction) {
         self.action_buffer.insert(user_id, cmd);
 
-        if self.is_first_night {}
+        let required_uids: Vec<_> = if self.is_first_night {
+            self.joined_players
+                .iter()
+                .filter(|(_uid, player)| player.role().can_action_fist_night())
+                .map(|(uid, _)| uid)
+                .collect()
+        } else {
+            self.joined_players
+                .iter()
+                .filter(|(_uid, player)| player.role().can_action())
+                .map(|(uid, _)| uid)
+                .collect()
+        };
 
-        if self.action_buffer.iter().count() == self.joined_players.iter().count() {
+        if required_uids
+            .iter()
+            .all(|uid| self.action_buffer.iter().any(|(auid, _)| *auid == **uid))
+        {
+            self.is_first_night = false;
             let _ = self.message_sender.send(GameMessage::NIGHTEND).await;
         }
     }
@@ -219,7 +235,7 @@ impl LupusGame {
             .filter(|(_, player)| player.alive);
 
         let good_players_count = alive_players
-            .filter(|(_, player)| player.role.is_good_for_win())
+            .filter(|(_, player)| player.role.is_actually_good())
             .count();
 
         // Vincono i lupi o vince il rimanente

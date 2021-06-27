@@ -83,7 +83,7 @@ impl LupusRole {
         }
     }
 
-    pub fn is_good_for_win(&self) -> bool {
+    pub fn is_actually_good(&self) -> bool {
         match self {
             Self::VEGGENTE
             | Self::BODYGUARD { .. }
@@ -99,7 +99,7 @@ impl LupusRole {
 
     pub fn can_action(&self) -> bool {
         match self {
-            Self::VILLICO => false,
+            Self::VILLICO | Self::INDEMONIATO | Self::CRICETO | Self::MEDIUM => false,
             _ => false,
         }
     }
