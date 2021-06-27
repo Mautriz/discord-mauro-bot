@@ -6,7 +6,7 @@ use serenity::prelude::*;
 
 #[command]
 #[only_in(dms)]
-pub async fn wolfvote(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+pub async fn wolfvote(ctx: &Context, msg: &Message,  args: Args) -> CommandResult {
     LupusCtxHelper::generic_action(
         ctx,
         msg,

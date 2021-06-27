@@ -1,7 +1,8 @@
 use serenity::prelude::TypeMap;
 use tokio::sync::{RwLockReadGuard, RwLockWriteGuard};
 
-use super::context::{LupusCtx, LupusManager, LupusPlayer, Tag};
+use super::context::{LupusCtx, LupusManager, Tag};
+use super::player::LupusPlayer;
 use super::roles::LupusRole;
 use serenity::async_trait;
 
