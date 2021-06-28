@@ -11,7 +11,7 @@ use super::player::LupusPlayer;
 use super::roles::LupusAction;
 use super::roles::LupusRole;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum GamePhase {
     FIRSTNIGHT,
     NIGHT,
@@ -40,6 +40,10 @@ impl LupusGame {
         self.game_phase = phase
     }
 
+    pub fn get_phase(&self) -> &GamePhase {
+        &self.game_phase
+    }
+
     pub fn get_alive_players(&self) -> impl Iterator<Item = (&UserId, &LupusPlayer)> {
         self.joined_players.iter().filter(|(_, p)| p.alive())
     }
@@ -59,24 +63,13 @@ impl LupusGame {
     pub async fn push_night_action(&mut self, user_id: UserId, cmd: LupusAction) {
         self.action_buffer.insert(user_id, cmd);
 
-        let required_uids: Vec<_> = if matches!(self.game_phase, GamePhase::FIRSTNIGHT) {
-            self.joined_players
-                .iter()
-                .filter(|(_uid, player)| player.role().can_action_fist_night())
-                .map(|(uid, _)| uid)
-                .collect()
-        } else {
-            self.joined_players
-                .iter()
-                .filter(|(_uid, player)| player.role().can_action())
-                .map(|(uid, _)| uid)
-                .collect()
-        };
-
-        if required_uids
+        let mut required_uids = self
+            .joined_players
             .iter()
-            .all(|uid| self.action_buffer.iter().any(|(auid, _)| *auid == **uid))
-        {
+            .filter(|(_uid, player)| player.role().can_action(&self.game_phase))
+            .map(|(uid, _)| uid);
+
+        if required_uids.all(|uid| self.action_buffer.iter().any(|(auid, _)| *auid == *uid)) {
             let _ = self.message_sender.send(GameMessage::NIGHTEND).await;
         }
     }
@@ -86,6 +79,10 @@ impl LupusGame {
         if !has_ended {
             let _ = self.message_sender.send(GameMessage::DAYEND).await;
         }
+    }
+
+    pub fn is_phase(&self, phase: GamePhase) -> bool {
+        self.game_phase == phase
     }
 
     pub async fn game_end(&self) -> Result<(), SendError<GameMessage>> {

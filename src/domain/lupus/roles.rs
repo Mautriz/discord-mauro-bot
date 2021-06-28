@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use serenity::model::id::UserId;
 
+use super::game::GamePhase;
+
 // LUPI: durante la notte uccidono una persona; sono visti cattivi dal veggente
 // VEGGENTE: durante la notte vede il ruolo di una persona da lui scelta; il master dirà lui se è buono o cattivo
 // CRICETO: viene visto buono; il suo scopo è quello di farsi impiccare durante il giorno in modo tale da vincere il gioco (se si è in tanti, ammazza due di quelli che l'hanno votato); non muore di notte se non dal vigilante
@@ -96,14 +98,22 @@ impl LupusRole {
         }
     }
 
-    pub fn can_action(&self) -> bool {
+    pub fn can_action(&self, phase: &GamePhase) -> bool {
+        match phase {
+            GamePhase::DAY => false,
+            GamePhase::FIRSTNIGHT => self.can_action_fist_night(),
+            GamePhase::NIGHT => self.can_action_night(),
+        }
+    }
+
+    fn can_action_night(&self) -> bool {
         match self {
             Self::VILLICO | Self::INDEMONIATO | Self::CRICETO | Self::MEDIUM => false,
             _ => false,
         }
     }
 
-    pub fn can_action_fist_night(&self) -> bool {
+    fn can_action_fist_night(&self) -> bool {
         match self {
             Self::VEGGENTE | Self::GUFO | Self::STREGA(..) => true,
             _ => false,

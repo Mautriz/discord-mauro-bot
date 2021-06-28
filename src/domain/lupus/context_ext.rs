@@ -1,7 +1,10 @@
+use std::borrow::Borrow;
+
 use serenity::prelude::TypeMap;
 use tokio::sync::{RwLockReadGuard, RwLockWriteGuard};
 
 use super::context::{LupusCtx, LupusManager, Tag};
+use super::game::GamePhase;
 use super::player::LupusPlayer;
 use super::roles::LupusRole;
 use serenity::async_trait;
@@ -68,22 +71,29 @@ impl LupusCtxHelper {
             .await
             .ok_or(MyError)?;
 
-        let player = {
+        let (game_phase, p): (GamePhase, LupusPlayer) = {
             let dt = ctx.data.read().await;
-            dt.get_player(&guild_id, &user_id).await
+            let lupus = dt.lupus().await;
+            let game = lupus.get_game(&guild_id).ok_or(MyError)?.read().await;
+            let player = game.get_player(&user_id).cloned().ok_or(MyError)?;
+            let game_phase: &GamePhase = game.get_phase();
+            let gp = (*game_phase).clone();
+            (gp, player)
         };
 
-        if let Some(p) = player {
-            if role_check(p.current_role().clone()) {
-                LupusCtxHelper::send_lupus_command(ctx, msg, action_create(target_id)).await?;
-                msg.channel_id
-                    .say(&ctx.http, "azione registrata con successo")
-                    .await?;
-            } else {
-                msg.channel_id
-                    .say(&ctx.http, "fra... ruolo sbagliato")
-                    .await?;
-            }
+        let player_role = p.current_role().clone();
+        if role_check(player_role.clone()) && player_role.can_action(&game_phase) {
+            LupusCtxHelper::send_lupus_command(ctx, msg, action_create(target_id)).await?;
+            msg.channel_id
+                .say(&ctx.http, "azione registrata con successo")
+                .await?;
+        } else {
+            msg.channel_id
+                .say(
+                    &ctx.http,
+                    "ruolo sbagliato o stai momento sbagliato per fare action",
+                )
+                .await?;
         }
         Ok(())
     }
