@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use serenity::prelude::TypeMap;
 use tokio::sync::{RwLockReadGuard, RwLockWriteGuard};
 
