@@ -1,6 +1,11 @@
+use std::time::Duration;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::domain::lupus::player::LupusPlayer;
+
+use serenity::collector::message_collector::MessageCollectorBuilder;
+use serenity::futures::StreamExt;
+use tokio::sync::RwLockWriteGuard;
 
 use super::game::{GamePhase, LupusGame};
 use super::roles::LupusRole;
@@ -33,46 +38,84 @@ impl LupusManager {
         }))
     }
 
+    pub async fn handle_vigilante_death(
+        &self,
+        ctx: &Context,
+        killed_player_ids: Vec<UserId>,
+        game_writer: &RwLockWriteGuard<'_, LupusGame>,
+    ) -> Option<UserId> {
+        if let Some((uid, _)) = killed_player_ids
+            .iter()
+            .filter_map(|id| {
+                if let Some(player) = game_writer.get_player(&id) {
+                    Some((id, player))
+                } else {
+                    None
+                }
+            })
+            .find(|(_, p)| {
+                matches!(
+                    p,
+                    LupusPlayer {
+                        role: LupusRole::VIGILANTE { has_shot: false },
+                        ..
+                    }
+                )
+            })
+        {
+            if let Ok(ch) = uid.create_dm_channel(&ctx.http).await {
+                if let Ok(_) = ch
+                    .say(
+                        &ctx.http,
+                        "Devi sparare il tuo colpo, scrivi chi vuoi uccidere",
+                    )
+                    .await
+                {
+                    let mut response = MessageCollectorBuilder::new(&ctx)
+                        .author_id(uid.0)
+                        .channel_id(ch.id)
+                        .collect_limit(1)
+                        .timeout(Duration::from_secs(30))
+                        .await;
+
+                    if let Some(msg) = response.next().await {
+                        if msg.content.clone().to_lowercase() == "none".to_string() {
+                            return None;
+                        }
+                        let (uid, _) = self.get_ids_from_tag(Tag(msg.content.clone()))?;
+
+                        return Some(uid);
+                    }
+                }
+            }
+        }
+
+        return None;
+    }
+
     pub async fn handle_night(&self, guild_id: &GuildId, ctx: &Context, msg: &Message) {
         // Aspetta l'evento
         let game = self.get_game(guild_id).unwrap();
         {
             let mut game_writer = game.write().await;
-            let killed_player_ids: Vec<_> = game_writer.process_actions(ctx).await.collect();
+
+            let mut killed_player_ids: Vec<_> = game_writer.process_actions(ctx).await.collect();
+
+            // Da controllare se funziona
+            let player_to_kill = self
+                .handle_vigilante_death(ctx, killed_player_ids.clone(), &game_writer)
+                .await;
+            if let Some(p_to_kill) = player_to_kill {
+                if let Ok(uid) = game_writer.guard_kill_loop(p_to_kill) {
+                    killed_player_ids.push(uid)
+                }
+            }
 
             let killed_players: Vec<_> = killed_player_ids
                 .iter()
                 .filter_map(|a| self.get_tag_from_id(&a))
                 .map(|a| &a.0)
                 .collect();
-
-            // if let Some((uid,vigilante)) = killed_player_ids
-            //     .iter()
-            //     .filter_map(|id| {
-            //         if let Some(player) = game_writer.get_player(&id) {
-            //             Some((id, player))
-            //         } else {
-            //             None
-            //         }
-            //     })
-            //     .find(|(_, p)| {
-            //         matches!(
-            //             p,
-            //             LupusPlayer {
-            //                 role: LupusRole::VIGILANTE { has_shot: false },
-            //                 ..
-            //             }
-            //         )
-            //     })
-            // {
-            //     if let Ok(ch) = uid.create_dm_channel(cache_http).await {
-            //         if let Ok(msg) = ch.say(&ctx.http, "Devi sparare il tuo, scrivi chi vuoi uccidere").await {
-
-            //         }
-
-            //         ch.
-            //     }
-            // }
 
             if let Some(new_wolf_leader) = game_writer.reassign_wolf_if_master_is_dead() {
                 if let Ok(ch) = new_wolf_leader.create_dm_channel(&ctx.http).await {
