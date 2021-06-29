@@ -66,7 +66,7 @@ impl LupusGame {
         let mut required_uids = self
             .joined_players
             .iter()
-            .filter(|(_uid, player)| player.role().can_action(&self.game_phase))
+            .filter(|(_uid, player)| player.role().can_action(&self.game_phase) && player.alive())
             .map(|(uid, _)| uid);
 
         if required_uids.all(|uid| self.action_buffer.iter().any(|(auid, _)| *auid == *uid)) {
@@ -146,22 +146,35 @@ impl LupusGame {
         }
     }
 
-    pub async fn process_actions(&mut self, ctx: &Context) {
+    pub async fn process_actions(
+        &mut self,
+        ctx: &Context,
+        msg: &Message,
+    ) -> impl Iterator<Item = UserId> {
         let mut buffer: Vec<_> = self.action_buffer.drain().collect();
         buffer.sort_by_key(|a| a.1);
+
+        let mut killed_players = vec![];
         while let Some(action) = buffer.pop() {
-            self.process_action(action, ctx).await
+            killed_players.push(self.process_action(action, ctx, msg).await)
         }
+
+        killed_players.into_iter().filter_map(|a| a)
     }
 
-    pub async fn process_action(&mut self, action: (UserId, LupusAction), ctx: &Context) {
+    pub async fn process_action(
+        &mut self,
+        action: (UserId, LupusAction),
+        ctx: &Context,
+        msg: &Message,
+    ) -> Option<UserId> {
         let player = self.joined_players.get(&action.0);
         // Se il player che fa l'azione è roleblockato, ritorna senza fare nulla
         if let Some(LupusPlayer {
             role_blocked: true, ..
         }) = player
         {
-            return;
+            return None;
         }
 
         match action.1 {
@@ -187,16 +200,16 @@ impl LupusGame {
                 }
             }
             LupusAction::GuardShot(user_id) => {
-                let _ = self.guard_kill_loop(user_id);
+                return self.guard_kill_loop(user_id).ok();
             }
             LupusAction::Kill(user_id) | LupusAction::WolfVote(user_id) => {
-                let _ = self.kill_loop(user_id);
+                return self.kill_loop(user_id).ok();
             }
             LupusAction::Protect(user_id) => {
                 if let Some(target) = self.joined_players.get_mut(&user_id) {
                     if let LupusRole::BODYGUARD { self_protected } = target.role {
                         if self_protected {
-                            return;
+                            return None;
                         }
                         target.role = LupusRole::BODYGUARD {
                             self_protected: true,
@@ -225,7 +238,9 @@ impl LupusGame {
                 }
             }
             LupusAction::Pass => (),
-        }
+        };
+
+        None
     }
 
     pub fn cleanup(&mut self) {

@@ -27,6 +27,19 @@ impl LupusCtxHelper {
 
         // Command handling
         if let Some(game) = lupus.get_game(&guild_id) {
+            {
+                let game_reader = game.read().await;
+                let player = game_reader.get_player(&user_id).ok_or(MyError)?;
+                if !player.alive() {
+                    msg.channel_id
+                        .say(
+                            &ctx.http,
+                            format!("Sei morto bro non puoi fare azioni ti prego calmati .."),
+                        )
+                        .await?;
+                    return Ok(());
+                }
+            }
             let mut game_writer = game.write().await;
             game_writer.push_night_action(user_id, action).await;
         } else {

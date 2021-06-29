@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use crate::domain::error::MyError;
 use crate::domain::lupus::player::LupusPlayer;
 
 use super::game::{GamePhase, LupusGame};
@@ -33,12 +34,29 @@ impl LupusManager {
         }))
     }
 
-    pub async fn handle_night(&self, guild_id: &GuildId, ctx: &Context) {
+    pub async fn handle_night(&self, guild_id: &GuildId, ctx: &Context, msg: &Message) {
         // Aspetta l'evento
         let game = self.get_game(guild_id).unwrap();
         {
             let mut game_writer = game.write().await;
-            game_writer.process_actions(ctx).await;
+            let killed_players: Vec<_> = game_writer
+                .process_actions(ctx, msg)
+                .await
+                .filter_map(|a| self.get_tag_from_id(&a))
+                .map(|a| &a.0)
+                .collect();
+
+            let _ = msg
+                .channel_id
+                .say(
+                    &ctx.http,
+                    format!(
+                        "I player sterminati distrutti uccisi demoliti massacrati sono: {:?}",
+                        killed_players
+                    ),
+                )
+                .await;
+
             game_writer.cleanup();
             game_writer.set_phase(GamePhase::DAY)
         }

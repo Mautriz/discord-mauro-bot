@@ -31,7 +31,7 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
         match game_message {
             GameMessage::NIGHTEND => {
                 let lupus = data.lupus().await;
-                lupus.handle_night(&guild_id, ctx).await;
+                lupus.handle_night(&guild_id, ctx, msg).await;
                 msg.channel_id.say(&ctx.http, "La notte è finita").await?;
             }
             GameMessage::DAYEND => {
