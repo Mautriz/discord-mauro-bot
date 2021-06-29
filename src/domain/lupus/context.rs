@@ -38,12 +38,41 @@ impl LupusManager {
         let game = self.get_game(guild_id).unwrap();
         {
             let mut game_writer = game.write().await;
-            let killed_player_ids = game_writer.process_actions(ctx).await;
+            let killed_player_ids: Vec<_> = game_writer.process_actions(ctx).await.collect();
 
             let killed_players: Vec<_> = killed_player_ids
+                .iter()
                 .filter_map(|a| self.get_tag_from_id(&a))
                 .map(|a| &a.0)
                 .collect();
+
+            // if let Some((uid,vigilante)) = killed_player_ids
+            //     .iter()
+            //     .filter_map(|id| {
+            //         if let Some(player) = game_writer.get_player(&id) {
+            //             Some((id, player))
+            //         } else {
+            //             None
+            //         }
+            //     })
+            //     .find(|(_, p)| {
+            //         matches!(
+            //             p,
+            //             LupusPlayer {
+            //                 role: LupusRole::VIGILANTE { has_shot: false },
+            //                 ..
+            //             }
+            //         )
+            //     })
+            // {
+            //     if let Ok(ch) = uid.create_dm_channel(cache_http).await {
+            //         if let Ok(msg) = ch.say(&ctx.http, "Devi sparare il tuo, scrivi chi vuoi uccidere").await {
+
+            //         }
+
+            //         ch.
+            //     }
+            // }
 
             if let Some(new_wolf_leader) = game_writer.reassign_wolf_if_master_is_dead() {
                 if let Ok(ch) = new_wolf_leader.create_dm_channel(&ctx.http).await {
@@ -68,7 +97,7 @@ impl LupusManager {
                 .await;
 
             game_writer.cleanup();
-            game_writer.set_phase(GamePhase::DAY)
+            game_writer.set_phase(GamePhase::DAY);
         }
         let game_read = game.read().await;
         game_read.check_if_ended().await;
