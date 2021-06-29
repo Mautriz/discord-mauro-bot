@@ -5,6 +5,7 @@ use serenity::prelude::*;
 
 #[command]
 #[only_in(guilds)]
+#[description = "Fa partire il game con le persone joinate"]
 pub async fn start_game(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let guild_id = msg.guild_id.unwrap();
     let data = ctx.data.read().await;

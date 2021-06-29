@@ -14,7 +14,7 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
         LupusRole::MEDIUM,
         LupusRole::VILLICO,
         LupusRole::VILLICO,
-        LupusRole::STREGA(Box::new(LupusRole::NOTASSIGNED)),
+        LupusRole::CRICETO,
         LupusRole::INDEMONIATO,
         LupusRole::VIGILANTE { has_shot: false },
         LupusRole::DORIANGREY {
@@ -25,7 +25,7 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
         LupusRole::SEXWORKER,
         LupusRole::DOTTORE { has_healed: false },
         LupusRole::WOLF { is_leader: false },
-        LupusRole::CRICETO,
+        LupusRole::STREGA(Box::new(LupusRole::NOTASSIGNED)),
     ];
 
     let mut filtered_roles = complete_roles

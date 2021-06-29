@@ -6,6 +6,7 @@ use serenity::prelude::*;
 
 #[command]
 #[only_in(dms)]
+#[description = "Medino: fa rinascere un player, una sola volta per game"]
 pub async fn heal(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     LupusCtxHelper::generic_action(
         ctx,

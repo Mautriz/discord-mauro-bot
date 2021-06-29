@@ -6,6 +6,7 @@ use serenity::prelude::*;
 
 #[command]
 #[only_in(dms)]
+#[description = "Veggente: Mostra la natura di un player"]
 pub async fn truesight(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     LupusCtxHelper::generic_action(
         ctx,

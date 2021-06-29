@@ -9,6 +9,7 @@ use crate::domain::lupus::roles::LupusRole;
 
 #[command]
 #[only_in(dms)]
+#[description = "Strega: ruba il ruolo di un player per questo turno"]
 pub async fn possess(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let target_tag: String = args.single()?;
     let (target_id, _) = LupusCtxHelper::parse_tag_to_target_id(ctx, Tag(target_tag))

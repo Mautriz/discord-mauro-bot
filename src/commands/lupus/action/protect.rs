@@ -6,6 +6,7 @@ use serenity::prelude::*;
 
 #[command]
 #[only_in(dms)]
+#[description = "Bodyguard: protegge un player"]
 pub async fn protect(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     LupusCtxHelper::generic_action(
         ctx,

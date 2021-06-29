@@ -6,6 +6,7 @@ use serenity::prelude::*;
 
 #[command]
 #[only_in(dms)]
+#[description = "Dorian Grey: da un quadro a qualcuno, se dorian muore il quadro esplode insieme all'altro tizio, dorian rimane in vita"]
 pub async fn givepicture(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     LupusCtxHelper::generic_action(
         ctx,

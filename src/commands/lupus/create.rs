@@ -9,6 +9,7 @@ use crate::domain::msg_ext::MessageExt;
 
 #[command]
 #[only_in(guilds)]
+#[description = "Crea la partita lupus"]
 pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let data = ctx.data.read().await;
     let (_, guild_id) = msg.get_ids();

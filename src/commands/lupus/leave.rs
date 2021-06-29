@@ -7,6 +7,7 @@ use crate::domain::msg_ext::MessageExt;
 
 #[command]
 #[only_in(guilds)]
+#[description = "Esci dalla partita, se ancora non e' iniziata"]
 pub async fn leave(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     let (user_id, guild_id) = msg.get_ids();
 

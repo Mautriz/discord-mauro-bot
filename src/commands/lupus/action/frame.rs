@@ -5,6 +5,7 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 #[command]
+#[description = "Gufo: mostra un player come cattivone al veggente"]
 #[only_in(dms)]
 pub async fn frame(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     LupusCtxHelper::generic_action(

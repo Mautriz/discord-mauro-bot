@@ -6,7 +6,8 @@ use serenity::prelude::*;
 
 #[command]
 #[only_in(dms)]
-pub async fn wolfvote(ctx: &Context, msg: &Message,  args: Args) -> CommandResult {
+#[description = "Wolf: killa un playerone (puo' essere usato solo dal wolf master)"]
+pub async fn wolfvote(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     LupusCtxHelper::generic_action(
         ctx,
         msg,

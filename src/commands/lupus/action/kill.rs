@@ -6,6 +6,7 @@ use serenity::prelude::*;
 
 #[command]
 #[only_in(dms)]
+#[description = "Serial killer: killa un playerone"]
 pub async fn kill(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     LupusCtxHelper::generic_action(
         ctx,

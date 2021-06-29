@@ -6,6 +6,7 @@ use crate::domain::lupus::context_ext::LupusHelpers;
 
 #[command]
 #[only_in(guilds)]
+#[description = "Entra nella partita lupus di questo server"]
 pub async fn join(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
     // let user_id = msg.author.id;
     let guild_id = msg.guild_id.unwrap();
