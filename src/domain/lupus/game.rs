@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::Sender;
+use tracing::info;
 
 use super::context::GameMessage;
 use super::player::KillError;
@@ -38,6 +39,7 @@ impl LupusGame {
     }
 
     pub fn set_phase(&mut self, phase: GamePhase) {
+        info!("Setting phase: {:?}", phase);
         self.game_phase = phase
     }
 
@@ -147,17 +149,13 @@ impl LupusGame {
         }
     }
 
-    pub async fn process_actions(
-        &mut self,
-        ctx: &Context,
-        msg: &Message,
-    ) -> impl Iterator<Item = UserId> {
+    pub async fn process_actions(&mut self, ctx: &Context) -> impl Iterator<Item = UserId> {
         let mut buffer: Vec<_> = self.action_buffer.drain().collect();
         buffer.sort_by_key(|a| a.1);
 
         let mut killed_players = vec![];
         while let Some(action) = buffer.pop() {
-            killed_players.push(self.process_action(action, ctx, msg).await)
+            killed_players.push(self.process_action(action, ctx).await)
         }
 
         killed_players.into_iter().filter_map(|a| a)
@@ -167,7 +165,6 @@ impl LupusGame {
         &mut self,
         action: (UserId, LupusAction),
         ctx: &Context,
-        msg: &Message,
     ) -> Option<UserId> {
         let player = self.joined_players.get(&action.0);
         // Se il player che fa l'azione è roleblockato, ritorna senza fare nulla

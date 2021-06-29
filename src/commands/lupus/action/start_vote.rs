@@ -111,7 +111,7 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
         let game_reader = game.read().await;
         let maybe_player = game_reader
             .get_alive_players()
-            .find(|(_, player)| matches!(player.role(), &LupusRole::VEGGENTE))
+            .find(|(_, player)| matches!(player.role(), &LupusRole::MEDIUM))
             .map(|(uid, _)| uid);
 
         if let Some(player) = maybe_player {

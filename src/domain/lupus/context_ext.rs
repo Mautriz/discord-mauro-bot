@@ -102,7 +102,7 @@ impl LupusCtxHelper {
             msg.channel_id
                 .say(
                     &ctx.http,
-                    "ruolo sbagliato o stai momento sbagliato per fare action",
+                    "ruolo sbagliato o momento sbagliato per fare action",
                 )
                 .await?;
         }

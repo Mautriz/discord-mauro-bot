@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::domain::error::MyError;
 use crate::domain::lupus::player::LupusPlayer;
 
 use super::game::{GamePhase, LupusGame};
@@ -40,7 +39,7 @@ impl LupusManager {
         {
             let mut game_writer = game.write().await;
             let killed_players: Vec<_> = game_writer
-                .process_actions(ctx, msg)
+                .process_actions(ctx)
                 .await
                 .filter_map(|a| self.get_tag_from_id(&a))
                 .map(|a| &a.0)

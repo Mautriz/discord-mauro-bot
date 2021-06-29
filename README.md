@@ -26,6 +26,7 @@ SUPER MEGA WIPPONE DEVASTANTANTE MORTALE DEVO ANCORA FARE UN BOTTO DI ROBA
 - Check di stato di gioco per registrazione comandi (giorno o notte)
 - Check funzionamento effettivo del gioco
 - Migliorare i messaggi mandati ai giocatori
+- Quando lupo master muore, il potere va dato a qualcun altro (Un solo wolfvote per notte)
 
 
 ## Da migliorare

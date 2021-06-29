@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use serenity::model::id::UserId;
+use tracing::info;
 
 use super::game::GamePhase;
 
@@ -99,6 +100,7 @@ impl LupusRole {
     }
 
     pub fn can_action(&self, phase: &GamePhase) -> bool {
+        info!("can action fase: {:?}", phase);
         match phase {
             GamePhase::DAY => false,
             GamePhase::VOTAZIONE => false,
@@ -110,7 +112,7 @@ impl LupusRole {
     fn can_action_night(&self) -> bool {
         match self {
             Self::VILLICO | Self::INDEMONIATO | Self::CRICETO | Self::MEDIUM => false,
-            _ => false,
+            _ => true,
         }
     }
 
