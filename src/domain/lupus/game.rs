@@ -179,8 +179,19 @@ impl LupusGame {
             .filter(|(_, player)| player.role().is_actually_good())
             .count();
 
+        let bad_players_count = alive_players
+            .clone()
+            .filter(|(_, p)| !p.role().is_actually_good())
+            .count();
+
+        // DA FARE
+        // ULTIMI 3 RIMASTI STREGA + VILLICO + WOLF (VINCE STREGA)
         // Vincono i lupi o vince il rimanente
-        if alive_players.count() <= 1 || good_players_count == 0 {
+        if alive_players.count() <= 1
+            || good_players_count == 0
+            || bad_players_count == 0
+            || (bad_players_count >= 1 && good_players_count <= 1)
+        {
             let result = self.game_end().await;
             if let Err(_err) = result {
                 println!("Non sono riuscito a terminare il game con successo");
@@ -194,6 +205,9 @@ impl LupusGame {
     pub async fn process_actions(&mut self, ctx: &Context) -> impl Iterator<Item = UserId> {
         let mut buffer: Vec<_> = self.action_buffer.drain().collect();
         buffer.sort_by_key(|a| a.1);
+        buffer.reverse();
+
+        info!("{:?}", buffer.clone());
 
         let mut killed_players = vec![];
         while let Some(action) = buffer.pop() {
@@ -221,6 +235,7 @@ impl LupusGame {
             LupusAction::Frame(user_id) => {
                 if let Some(target) = self.joined_players.get_mut(&user_id) {
                     target.framed = true;
+                    info!("frammando {:?}", target.clone());
                 }
             }
             LupusAction::Heal(user_id) => {
@@ -274,6 +289,7 @@ impl LupusGame {
                 let player_to_check = self.joined_players.get(&user_id);
 
                 if let Some(pl) = player_to_check {
+                    info!("checkando {:?}", pl.clone());
                     let nature = pl.get_nature();
                     let _ = channel
                         .say(

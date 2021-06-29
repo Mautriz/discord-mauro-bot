@@ -1,3 +1,4 @@
+pub mod builder_test;
 pub mod invito;
 pub mod lupus;
 pub mod ping;

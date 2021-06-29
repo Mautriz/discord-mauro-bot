@@ -6,8 +6,8 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
 
     let complete_roles = vec![
         LupusRole::GUFO { is_leader: false },
-        LupusRole::WOLF { is_leader: true },
         LupusRole::VEGGENTE,
+        LupusRole::WOLF { is_leader: true },
         LupusRole::BODYGUARD {
             self_protected: false,
         },

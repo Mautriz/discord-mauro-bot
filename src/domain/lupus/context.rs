@@ -38,59 +38,20 @@ impl LupusManager {
         }))
     }
 
-    pub async fn handle_vigilante_death(
-        &self,
+    pub async fn handle_wolf_reassing(
         ctx: &Context,
-        killed_player_ids: Vec<UserId>,
-        game_writer: &RwLockWriteGuard<'_, LupusGame>,
-    ) -> Option<UserId> {
-        if let Some((uid, _)) = killed_player_ids
-            .iter()
-            .filter_map(|id| {
-                if let Some(player) = game_writer.get_player(&id) {
-                    Some((id, player))
-                } else {
-                    None
-                }
-            })
-            .find(|(_, p)| {
-                matches!(
-                    p,
-                    LupusPlayer {
-                        role: LupusRole::VIGILANTE { has_shot: false },
-                        ..
-                    }
-                )
-            })
-        {
-            if let Ok(ch) = uid.create_dm_channel(&ctx.http).await {
-                if let Ok(_) = ch
+        game_writer: &mut RwLockWriteGuard<'_, LupusGame>,
+    ) {
+        if let Some(new_wolf_leader) = game_writer.reassign_wolf_if_master_is_dead() {
+            if let Ok(ch) = new_wolf_leader.create_dm_channel(&ctx.http).await {
+                let _ = ch
                     .say(
                         &ctx.http,
-                        "Devi sparare il tuo colpo, scrivi chi vuoi uccidere",
+                        "Sei il nuovo capo dei lupi, ora sarai tu a dover killare",
                     )
-                    .await
-                {
-                    let mut response = MessageCollectorBuilder::new(&ctx)
-                        .author_id(uid.0)
-                        .channel_id(ch.id)
-                        .collect_limit(1)
-                        .timeout(Duration::from_secs(30))
-                        .await;
-
-                    if let Some(msg) = response.next().await {
-                        if msg.content.clone().to_lowercase() == "none".to_string() {
-                            return None;
-                        }
-                        let (uid, _) = self.get_ids_from_tag(Tag(msg.content.clone()))?;
-
-                        return Some(uid);
-                    }
-                }
+                    .await;
             }
-        }
-
-        return None;
+        };
     }
 
     pub async fn handle_night(&self, guild_id: &GuildId, ctx: &Context, msg: &Message) {
@@ -117,16 +78,7 @@ impl LupusManager {
                 .map(|a| &a.0)
                 .collect();
 
-            if let Some(new_wolf_leader) = game_writer.reassign_wolf_if_master_is_dead() {
-                if let Ok(ch) = new_wolf_leader.create_dm_channel(&ctx.http).await {
-                    let _ = ch
-                        .say(
-                            &ctx.http,
-                            "Sei il nuovo capo dei lupi, ora sarai tu a dover killare",
-                        )
-                        .await;
-                }
-            };
+            LupusManager::handle_wolf_reassing(ctx, &mut game_writer).await;
 
             let _ = msg
                 .channel_id
@@ -146,13 +98,14 @@ impl LupusManager {
         game_read.check_if_ended().await;
     }
 
-    pub async fn handle_day(&self, guild_id: &GuildId) {
+    pub async fn handle_day(&self, guild_id: &GuildId, ctx: &Context) {
         let game = self.get_game(guild_id).unwrap();
         {
             let mut game_writer = game.write().await;
             game_writer.set_phase(GamePhase::NIGHT)
         }
         let game_read = game.read().await;
+        LupusManager::handle_wolf_reassing(ctx, &mut game.write().await).await;
         game_read.check_if_ended().await;
     }
 
@@ -263,6 +216,61 @@ impl LupusManager {
                     .await;
             }
         }
+    }
+
+    pub async fn handle_vigilante_death(
+        &self,
+        ctx: &Context,
+        killed_player_ids: Vec<UserId>,
+        game_writer: &RwLockWriteGuard<'_, LupusGame>,
+    ) -> Option<UserId> {
+        if let Some((uid, _)) = killed_player_ids
+            .iter()
+            .filter_map(|id| {
+                if let Some(player) = game_writer.get_player(&id) {
+                    Some((id, player))
+                } else {
+                    None
+                }
+            })
+            .find(|(_, p)| {
+                matches!(
+                    p,
+                    LupusPlayer {
+                        role: LupusRole::VIGILANTE { has_shot: false },
+                        ..
+                    }
+                )
+            })
+        {
+            if let Ok(ch) = uid.create_dm_channel(&ctx.http).await {
+                if let Ok(_) = ch
+                    .say(
+                        &ctx.http,
+                        "Devi sparare il tuo colpo, scrivi chi vuoi uccidere",
+                    )
+                    .await
+                {
+                    let mut response = MessageCollectorBuilder::new(&ctx)
+                        .author_id(uid.0)
+                        .channel_id(ch.id)
+                        .collect_limit(1)
+                        .timeout(Duration::from_secs(30))
+                        .await;
+
+                    if let Some(msg) = response.next().await {
+                        if msg.content.clone().to_lowercase() == "none".to_string() {
+                            return None;
+                        }
+                        let (uid, _) = self.get_ids_from_tag(Tag(msg.content.clone()))?;
+
+                        return Some(uid);
+                    }
+                }
+            }
+        }
+
+        return None;
     }
 }
 

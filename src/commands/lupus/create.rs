@@ -37,7 +37,7 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
             }
             GameMessage::DAYEND => {
                 let lupus = data.lupus().await;
-                lupus.handle_day(&guild_id).await;
+                lupus.handle_day(&guild_id, ctx).await;
                 msg.channel_id.say(&ctx.http, "Il giorno è finito").await?;
             }
             GameMessage::GAMEEND => {
