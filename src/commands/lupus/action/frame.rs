@@ -12,7 +12,7 @@ pub async fn frame(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
         ctx,
         msg,
         args,
-        |rl| matches!(rl, LupusRole::GUFO),
+        |rl| matches!(rl, LupusRole::GUFO { .. }),
         |uid| LupusAction::Frame(uid),
     )
     .await

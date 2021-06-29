@@ -8,8 +8,8 @@ mod stats;
 mod stop;
 
 use action::{
-    frame::*, givepicture::*, heal::*, kill::*, pass::*, possess::*, protect::*, roleblock::*,
-    shoot::*, start_vote::*, truesight::*, wolfvote::*,
+    frame::*, frame_and_kill::*, givepicture::*, heal::*, kill::*, pass::*, possess::*, protect::*,
+    roleblock::*, shoot::*, start_vote::*, truesight::*, wolfvote::*,
 };
 use create::*;
 use join::*;
@@ -42,6 +42,7 @@ use serenity::framework::standard::macros::group;
     stop,
     join,
     ls,
-    protect
+    protect,
+    frame_and_kill
 )]
 pub struct Lupus;

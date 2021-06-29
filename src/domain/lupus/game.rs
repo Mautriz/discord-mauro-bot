@@ -88,6 +88,48 @@ impl LupusGame {
         self.message_sender.send(GameMessage::GAMEEND).await
     }
 
+    pub fn reassign_wolf_if_master_is_dead(&mut self) -> Option<&UserId> {
+        let current_leader = self.get_alive_players().find(|(_, p)| {
+            matches!(p.role(), LupusRole::WOLF { is_leader: true })
+                || matches!(p.role(), LupusRole::GUFO { is_leader: true })
+        });
+
+        // Se cè gia un leader ce ne andiamo
+        if let Some(_) = current_leader {
+            return None;
+        };
+
+        let (user_id, player) = self
+            .joined_players
+            .iter_mut()
+            .filter(|(_, p)| p.alive())
+            .find(|(_, p)| {
+                matches!(
+                    p,
+                    LupusPlayer {
+                        role: LupusRole::GUFO { .. },
+                        alive: true,
+                        ..
+                    }
+                ) || matches!(
+                    p,
+                    LupusPlayer {
+                        role: LupusRole::WOLF { .. },
+                        alive: true,
+                        ..
+                    }
+                )
+            })?;
+
+        player.role = match player.role() {
+            LupusRole::WOLF { .. } => LupusRole::WOLF { is_leader: true },
+            LupusRole::GUFO { .. } => LupusRole::GUFO { is_leader: true },
+            role => role.clone(),
+        };
+
+        Some(user_id)
+    }
+
     pub fn generic_kill_loop(
         &mut self,
         uid: UserId,
@@ -196,6 +238,12 @@ impl LupusGame {
                         given_to: Some(target_id),
                     })
                 }
+            }
+            LupusAction::FrameAndKill(frame_id, kill_id) => {
+                if let Some(target) = self.joined_players.get_mut(&frame_id) {
+                    target.framed = true;
+                };
+                return self.kill_loop(kill_id).ok();
             }
             LupusAction::GuardShot(user_id) => {
                 return self.guard_kill_loop(user_id).ok();

@@ -38,12 +38,23 @@ impl LupusManager {
         let game = self.get_game(guild_id).unwrap();
         {
             let mut game_writer = game.write().await;
-            let killed_players: Vec<_> = game_writer
-                .process_actions(ctx)
-                .await
+            let killed_player_ids = game_writer.process_actions(ctx).await;
+
+            let killed_players: Vec<_> = killed_player_ids
                 .filter_map(|a| self.get_tag_from_id(&a))
                 .map(|a| &a.0)
                 .collect();
+
+            if let Some(new_wolf_leader) = game_writer.reassign_wolf_if_master_is_dead() {
+                if let Ok(ch) = new_wolf_leader.create_dm_channel(&ctx.http).await {
+                    let _ = ch
+                        .say(
+                            &ctx.http,
+                            "Sei il nuovo capo dei lupi, ora sarai tu a dover killare",
+                        )
+                        .await;
+                }
+            };
 
             let _ = msg
                 .channel_id
@@ -159,7 +170,7 @@ impl LupusManager {
                 .joined_players
                 .iter()
                 .filter(|(_a, b)| match b.role {
-                    LupusRole::WOLF { .. } | LupusRole::GUFO => true,
+                    LupusRole::WOLF { .. } | LupusRole::GUFO { .. } => true,
                     _ => false,
                 });
 

@@ -34,7 +34,9 @@ pub enum LupusRole {
         has_shot: bool,
     },
     MEDIUM,
-    GUFO,
+    GUFO {
+        is_leader: bool,
+    },
     DORIANGREY {
         has_quadro: bool,
         given_to: Option<UserId>,
@@ -79,7 +81,7 @@ impl LupusRole {
             | Self::SEXWORKER
             | Self::DOTTORE { .. }
             | Self::INDEMONIATO => Nature::GOOD,
-            Self::WOLF { .. } | Self::SERIALKILLER | Self::GUFO => Nature::EVIL,
+            Self::WOLF { .. } | Self::SERIALKILLER | Self::GUFO { .. } => Nature::EVIL,
             Self::STREGA(inner) => inner.get_nature(),
             _ => Nature::UNKNOWN,
         }
@@ -118,7 +120,7 @@ impl LupusRole {
 
     fn can_action_fist_night(&self) -> bool {
         match self {
-            Self::VEGGENTE | Self::GUFO | Self::STREGA(..) => true,
+            Self::VEGGENTE | Self::GUFO { .. } | Self::STREGA(..) => true,
             _ => false,
         }
     }
@@ -133,13 +135,14 @@ impl Default for LupusRole {
 #[derive(Clone, Debug, PartialOrd, Ord, Eq, PartialEq, Copy)]
 pub enum LupusAction {
     RoleBlock(UserId),
-    Frame(UserId),
+    Heal(UserId),
     Protect(UserId),
     GiveQuadro(UserId),
     GuardShot(UserId),
+    Frame(UserId),
+    FrameAndKill(UserId, UserId),
     Kill(UserId),
     WolfVote(UserId),
     TrueSight(UserId),
-    Heal(UserId),
     Pass,
 }

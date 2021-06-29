@@ -5,7 +5,7 @@ pub fn get_roles(player_number: usize) -> Vec<LupusRole> {
     let mut rng = rand::thread_rng();
 
     let complete_roles = vec![
-        LupusRole::GUFO,
+        LupusRole::GUFO { is_leader: false },
         LupusRole::WOLF { is_leader: true },
         LupusRole::VEGGENTE,
         LupusRole::BODYGUARD {
