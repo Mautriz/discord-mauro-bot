@@ -12,6 +12,7 @@ use crate::consts::{ASTENUTO_CIRCLE, NO_CIRCLE, YES_CIRCLE};
 use crate::domain::error::MyError;
 use crate::domain::lupus::context::Tag;
 use crate::domain::lupus::context_ext::{LupusCtxHelper, LupusHelpers};
+use crate::domain::lupus::game::GamePhase;
 use crate::domain::lupus::roles::LupusRole;
 use crate::domain::msg_ext::MessageExt;
 
@@ -34,12 +35,27 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
         return Ok(());
     }
 
+    let game_phase = *game.read().await.get_phase();
+    if !matches!(game_phase, GamePhase::DAY) {
+        msg.channel_id
+            .say(
+                &ctx.http,
+                format!(
+                    "Il voto puo' essere fatto solo di giorno, fase attuale: {:?}",
+                    game_phase
+                ),
+            )
+            .await?;
+    }
+
     let number_of_player_alive = game.read().await.get_alive_players_count();
 
     let sent_msg = msg
         .channel_id
         .say(&ctx.http, format!("votazione per: {}", target_tag.clone()))
         .await?;
+
+    game.write().await.set_phase(GamePhase::VOTAZIONE);
 
     sent_msg.react(&ctx.http, YES_CIRCLE).await?;
     sent_msg.react(&ctx.http, NO_CIRCLE).await?;

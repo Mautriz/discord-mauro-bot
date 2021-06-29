@@ -16,6 +16,7 @@ pub enum GamePhase {
     FIRSTNIGHT,
     NIGHT,
     DAY,
+    VOTAZIONE,
 }
 
 #[derive(Debug)]
