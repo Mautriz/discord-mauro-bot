@@ -7,7 +7,10 @@ mod start_game;
 mod stats;
 mod stop;
 
-use action::*;
+use action::{
+    frame::*, givepicture::*, heal::*, kill::*, pass::*, possess::*, protect::*, roleblock::*,
+    shoot::*, start_vote::*, truesight::*, wolfvote::*,
+};
 use create::*;
 use join::*;
 use leave::*;
@@ -20,5 +23,25 @@ use serenity::framework::standard::macros::group;
 
 #[group]
 #[prefixes("lupus")]
-#[commands(leave, stats, create, action, start_game, stop, join, ls)]
+#[commands(
+    roleblock,
+    shoot,
+    start_vote,
+    truesight,
+    wolfvote,
+    leave,
+    stats,
+    create,
+    frame,
+    givepicture,
+    heal,
+    kill,
+    pass,
+    possess,
+    start_game,
+    stop,
+    join,
+    ls,
+    protect
+)]
 pub struct Lupus;

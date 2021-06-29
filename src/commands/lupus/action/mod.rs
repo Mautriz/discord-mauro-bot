@@ -1,52 +1,48 @@
-use serenity::framework::standard::{macros::command, Args, CommandResult};
-use serenity::model::prelude::*;
-use serenity::prelude::*;
+pub mod frame;
+pub mod givepicture;
+pub mod heal;
+pub mod kill;
+pub mod pass;
+pub mod possess;
+pub mod protect;
+pub mod roleblock;
+pub mod shoot;
+pub mod start_vote;
+pub mod truesight;
+pub mod wolfvote;
 
-mod frame;
-mod givepicture;
-mod heal;
-mod kill;
-mod pass;
-mod possess;
-mod protect;
-mod roleblock;
-mod shoot;
-mod start_vote;
-mod truesight;
-mod wolfvote;
+// use frame::*;
+// use givepicture::*;
+// use heal::*;
+// use kill::*;
+// use pass::*;
+// use possess::*;
+// use protect::*;
+// use roleblock::*;
+// use shoot::*;
+// use start_vote::*;
+// use truesight::*;
+// use wolfvote::*;
 
-use frame::*;
-use givepicture::*;
-use heal::*;
-use kill::*;
-use pass::*;
-use possess::*;
-use protect::*;
-use roleblock::*;
-use shoot::*;
-use start_vote::*;
-use truesight::*;
-use wolfvote::*;
-
-#[command]
-#[sub_commands(
-    roleblock,
-    frame,
-    givepicture,
-    protect,
-    kill,
-    wolfvote,
-    truesight,
-    possess,
-    start_vote,
-    heal,
-    shoot,
-    pass
-)]
-pub async fn action(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
-    let _ = msg
-        .channel_id
-        .say(&ctx.http, format!("Please specify an action"))
-        .await;
-    Ok(())
-}
+// #[command]
+// #[sub_commands(
+//     roleblock,
+//     frame,
+//     givepicture,
+//     protect,
+//     kill,
+//     wolfvote,
+//     truesight,
+//     possess,
+//     start_vote,
+//     heal,
+//     shoot,
+//     pass
+// )]
+// pub async fn action(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
+//     let _ = msg
+//         .channel_id
+//         .say(&ctx.http, format!("Please specify an action"))
+//         .await;
+//     Ok(())
+// }

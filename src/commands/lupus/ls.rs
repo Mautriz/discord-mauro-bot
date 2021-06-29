@@ -1,11 +1,11 @@
-use crate::domain::lupus::context_ext::LupusHelpers;
+use crate::domain::lupus::context_ext::{LupusCtxHelper, LupusHelpers};
 use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
 #[command]
 pub async fn ls(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
-    let guild_id = msg.guild_id.unwrap();
+    let (_user_id, guild_id) = LupusCtxHelper::parse_id_to_guild_id(ctx, &msg.author.id).await?;
     let data = ctx.data.read().await;
     // Unwrap is always safe, as LupusCtx is defined in the general context of the main application
     let lupus_ctx = data.lupus().await;
@@ -15,6 +15,8 @@ pub async fn ls(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult 
             .joined_players
             .iter()
             .map(|a| lupus_ctx.get_tag_from_id(a.0).map(|a| &a.0))
+            .filter(|a| matches!(a, Some(_)))
+            .map(|a| a.unwrap())
             .collect();
 
         msg.channel_id

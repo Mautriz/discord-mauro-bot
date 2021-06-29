@@ -40,16 +40,28 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
                 msg.channel_id.say(&ctx.http, "Il giorno è finito").await?;
             }
             GameMessage::GAMEEND => {
-                let mut lupus = data.lupus_mut().await;
-                let game = lupus.close_game(&guild_id).ok_or(MyError)?;
+                let game = {
+                    let mut lupus = data.lupus_mut().await;
+                    let game = lupus.close_game(&guild_id).ok_or(MyError)?;
+
+                    game.to_owned()
+                };
+
                 let gm_reader = game.read().await;
+                let lupus = data.lupus().await;
+
+                let mapped_players: Vec<_> = gm_reader
+                    .joined_players
+                    .iter()
+                    .map(|(a, b)| (lupus.get_tag_from_id(a).unwrap().0.clone(), b))
+                    .collect();
 
                 msg.channel_id
                     .say(
                         &ctx.http,
                         format!(
                             "La partita è finita, questi sono tutti i player: {:?}",
-                            gm_reader.joined_players
+                            mapped_players
                         ),
                     )
                     .await?;

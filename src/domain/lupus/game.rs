@@ -81,10 +81,6 @@ impl LupusGame {
         }
     }
 
-    // pub fn is_phase(&self, phase: GamePhase) -> bool {
-    //     self.game_phase == phase
-    // }
-
     pub async fn game_end(&self) -> Result<(), SendError<GameMessage>> {
         self.message_sender.send(GameMessage::GAMEEND).await
     }

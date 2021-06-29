@@ -22,7 +22,7 @@ pub async fn invito(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
 
     let creation = channel
         .unwrap()
-        .create_invite(&ctx, |i| i.max_age(INVITE_DURATION).temporary(true))
+        .create_invite(&ctx, |i| i.temporary(true))
         .await;
 
     let invite = match creation {
@@ -62,7 +62,7 @@ pub async fn perma(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResu
 
     let creation = channel
         .unwrap()
-        .create_invite(&ctx, |i| i.max_uses(1).max_age(INVITE_DURATION))
+        .create_invite(&ctx, |i| i.max_uses(1))
         .await;
 
     let invite = match creation {
