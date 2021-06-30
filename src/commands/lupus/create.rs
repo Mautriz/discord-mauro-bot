@@ -34,7 +34,6 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
         match game_message {
             GameMessage::HANDLENIGHT => {
                 let lupus = data.lupus().await;
-                msg.channel_id.say(&ctx.http, "Inizia la notte").await?;
                 lupus.handle_night(&guild_id, ctx, msg).await;
                 msg.channel_id.say(&ctx.http, "La notte è finita").await?;
             }
@@ -44,9 +43,10 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
             }
             GameMessage::HANDLEDAY => {
                 let lupus = data.lupus().await;
-                msg.channel_id.say(&ctx.http, "Inizia il giorno").await?;
                 lupus.handle_day(&guild_id, ctx).await;
-                msg.channel_id.say(&ctx.http, "Il giorno è finito").await?;
+                msg.channel_id
+                    .say(&ctx.http, "Il giorno è finito, inizia la NOTTE O___O")
+                    .await?;
             }
             GameMessage::GAMEEND => {
                 let game = {

@@ -99,7 +99,7 @@ async fn main() {
 
     // Create the framework
     let framework = StandardFramework::new()
-        .configure(|c| c.owners(owners).prefix("mauro "))
+        .configure(|c| c.owners(owners).prefix("m "))
         .help(&MY_HELP)
         .group(&GENERAL_GROUP)
         .group(&LUPUS_GROUP);

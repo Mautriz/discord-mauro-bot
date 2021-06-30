@@ -11,6 +11,7 @@ use serenity::collector::ReactionAction;
 use serenity::framework::standard::CommandResult;
 use serenity::futures::StreamExt;
 use tokio::sync::RwLockWriteGuard;
+use tracing::info;
 
 use super::game::{GamePhase, LupusGame};
 use super::roles::LupusRole;
@@ -242,13 +243,17 @@ impl LupusManager {
 
     pub async fn handle_day(&self, guild_id: &GuildId, ctx: &Context) {
         let game = self.get_game(guild_id).unwrap();
+        LupusManager::handle_wolf_reassing(ctx, &mut game.write().await).await;
+
+        let game_read = game.read().await;
+        if game_read.check_if_ended().await {
+            let _ = game_read.game_end().await;
+        }
+
         {
             let mut game_writer = game.write().await;
-            game_writer.set_phase(GamePhase::NIGHT)
+            game_writer.set_phase(GamePhase::NIGHT);
         }
-        let game_read = game.read().await;
-        LupusManager::handle_wolf_reassing(ctx, &mut game.write().await).await;
-        game_read.check_if_ended().await;
     }
 
     pub fn get_ids_from_tag(&self, tag: Tag) -> Option<(UserId, GuildId)> {
