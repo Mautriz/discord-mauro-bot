@@ -72,7 +72,10 @@ impl LupusManager {
         guild_id: &GuildId,
     ) -> CommandResult {
         let game = self.get_game(guild_id).unwrap();
-        let mut emoji_vec = LupusManager::get_vote_emojis();
+        let emoji_vec = LupusManager::get_vote_emojis();
+        let mut emoji_vec_clone = emoji_vec.clone();
+        emoji_vec_clone.reverse();
+
         let url = msg.author.avatar_url().unwrap();
 
         let _players = { game.read().await.clone_players() };
@@ -81,7 +84,8 @@ impl LupusManager {
             .enumerate()
             .filter_map(|(i, (uid, p))| {
                 let tag = self.get_tag_from_id(uid)?;
-                Some((uid, p, tag, i))
+                let emote = emoji_vec.get(i)?;
+                Some((uid, p, tag, emote))
             })
             .collect();
 
@@ -106,7 +110,7 @@ impl LupusManager {
 
         let number_of_players_alive: usize = players.iter().count();
         for (_, _, _, _) in players.iter() {
-            if let Some(emoji) = emoji_vec.pop() {
+            if let Some(emoji) = emoji_vec_clone.pop() {
                 sent_msg.react(&ctx.http, emoji).await?;
             };
         }
@@ -412,7 +416,7 @@ impl LupusManager {
     }
 
     fn get_vote_emojis() -> Vec<ReactionType> {
-        let mut vector = vec![
+        vec![
             ReactionType::Unicode(ONE.into()),
             ReactionType::Unicode(TWO.into()),
             ReactionType::Unicode(THREE.into()),
@@ -429,9 +433,7 @@ impl LupusManager {
             ReactionType::Unicode(FOURTEEN.into()),
             ReactionType::Unicode(FIFTEEN.into()),
             ReactionType::Unicode(SIXTEEN.into()),
-        ];
-        vector.reverse();
-        vector
+        ]
     }
 }
 
