@@ -7,10 +7,31 @@ use crate::domain::lupus::context::GameMessage;
 use crate::domain::lupus::context_ext::LupusHelpers;
 use crate::domain::msg_ext::MessageExt;
 
+use crate::consts::*;
+
 #[command]
 #[only_in(guilds)]
 #[description = "Crea la partita lupus"]
 pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
+    let num_emojis: Vec<ReactionType> = vec![
+        ReactionType::Unicode(ONE.into()),
+        ReactionType::Unicode(TWO.into()),
+        ReactionType::Unicode(THREE.into()),
+        ReactionType::Unicode(FOUR.into()),
+        ReactionType::Unicode(FIVE.into()),
+        ReactionType::Unicode(SIX.into()),
+        ReactionType::Unicode(SEVEN.into()),
+        ReactionType::Unicode(EIGHT.into()),
+        ReactionType::Unicode(NINE.into()),
+        ReactionType::Unicode(TEN.into()),
+        ReactionType::Unicode(ELEVEN.into()),
+        ReactionType::Unicode(TWELVE.into()),
+        ReactionType::Unicode(THIRTEEN.into()),
+        ReactionType::Unicode(FOURTEEN.into()),
+        ReactionType::Unicode(FIFTEEN.into()),
+        ReactionType::Unicode(SIXTEEN.into()),
+    ];
+
     let data = ctx.data.read().await;
     let (_, guild_id) = msg.get_ids();
 
@@ -30,12 +51,16 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
     while let Some(game_message) = rx.recv().await {
         println!("msg: {:?}", game_message.clone());
         match game_message {
-            GameMessage::NIGHTEND => {
+            GameMessage::HANDLENIGHT => {
                 let lupus = data.lupus().await;
                 lupus.handle_night(&guild_id, ctx, msg).await;
                 msg.channel_id.say(&ctx.http, "La notte è finita").await?;
             }
-            GameMessage::DAYEND => {
+            GameMessage::HANDLEVOTATION => {
+                let lupus = data.lupus().await;
+                lupus.handle_votation(ctx, msg, &guild_id).await?;
+            }
+            GameMessage::HANDLEDAY => {
                 let lupus = data.lupus().await;
                 lupus.handle_day(&guild_id, ctx).await;
                 msg.channel_id.say(&ctx.http, "Il giorno è finito").await?;

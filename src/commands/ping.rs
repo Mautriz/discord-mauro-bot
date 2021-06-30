@@ -1,35 +1,26 @@
-use std::time::Duration;
-
 use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+use crate::domain::error::MyError;
+
 #[command]
 pub async fn ping(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
-    let sent_msg = msg
+    let url = msg.author.avatar_url().ok_or(MyError)?;
+    let _sent_msg = msg
         .channel_id
-        .say(
-            &ctx.http,
-            format!("Ciao {}, sei un pagliaccio", msg.author.tag()),
-        )
+        .send_message(&ctx.http, |m| {
+            m.embed(|e| {
+                e.thumbnail(url)
+                    .color((200,20,20))
+                    .title("Votazione per il giorno")
+                    .description(
+                        "Una descrizione matta :black_medium_small_square: *ciao* `AO bella fra`\nCIAOOOOOOOOOO :black_medium_small_square: \nCIAOOOOOOOOOO :black_medium_small_square: \nCIAOOOOOOOOOO :black_medium_small_square: \nCIAOOOOOOOOOO :black_medium_small_square: \nCIAOOOOOOOOOO :black_medium_small_square:`\nCIAOOOOOOOOOO :black_medium_small_square:`\nCIAOOOOOOOOOO :black_medium_small_square:",
+                    )
+                    .footer(|a| a.text("Bella neri TIEMME"))
+            })
+        })
         .await?;
-
-    let dm = msg.author.id.create_dm_channel(&ctx.http).await?;
-
-    let _ = dm.say(&ctx.http, "ciaooo").await;
-
-    while let Some(reaction) = sent_msg
-        .await_reaction(&ctx)
-        .timeout(Duration::from_secs(30))
-        .await
-    {
-        msg.react(
-            &ctx.http,
-            ReactionType::Unicode("2\u{fe0f}\u{20e3}".to_string()),
-        )
-        .await?;
-        println!("{:?}", reaction);
-    }
 
     Ok(())
 }

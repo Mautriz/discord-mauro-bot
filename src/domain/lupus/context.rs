@@ -1,9 +1,14 @@
 use std::time::Duration;
 use std::{collections::HashMap, sync::Arc};
 
+use crate::consts::*;
+use crate::domain::error::MyError;
 use crate::domain::lupus::player::LupusPlayer;
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 use serenity::collector::message_collector::MessageCollectorBuilder;
+use serenity::collector::ReactionAction;
+use serenity::framework::standard::CommandResult;
 use serenity::futures::StreamExt;
 use tokio::sync::RwLockWriteGuard;
 
@@ -22,6 +27,12 @@ impl TypeMapKey for LupusCtx {
 
 #[derive(PartialEq, Eq, Hash, Debug)]
 pub struct Tag(pub String);
+
+impl Display for Tag {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", self.0)
+    }
+}
 
 pub struct LupusManager {
     games: HashMap<GuildId, Arc<RwLock<LupusGame>>>,
@@ -52,6 +63,124 @@ impl LupusManager {
                     .await;
             }
         };
+    }
+
+    pub async fn handle_votation(
+        &self,
+        ctx: &Context,
+        msg: &Message,
+        guild_id: &GuildId,
+    ) -> CommandResult {
+        let game = self.get_game(guild_id).unwrap();
+        let emoji_vec = LupusManager::get_vote_emojis();
+        let url = msg.author.avatar_url().unwrap();
+
+        let _players = { game.read().await.clone_players() };
+        let players: Vec<_> = _players
+            .iter()
+            .enumerate()
+            .filter_map(|(i, (uid, p))| {
+                let tag = self.get_tag_from_id(uid)?;
+                let emoji = emoji_vec.get(i)?;
+                Some((uid, p, tag, emoji))
+            })
+            .collect();
+
+        let mut player_string: String = "".to_string();
+
+        players.iter().for_each(|(_, _, tag, emoji)| {
+            player_string.push_str(&format!("\n {} `{}`", emoji, tag));
+        });
+
+        let sent_msg = msg
+            .channel_id
+            .send_message(&ctx.http, |m| {
+                m.embed(|e| {
+                    e.thumbnail(url)
+                        .color((200, 20, 20))
+                        .title("Votazione per il giorno")
+                        .description(player_string)
+                        .footer(|a| a.text("Bella neri TIEMME"))
+                })
+            })
+            .await?;
+
+        let number_of_players_alive: usize = players.iter().count();
+
+        let reacts = sent_msg
+            .await_reactions(ctx)
+            .collect_limit(number_of_players_alive as u32)
+            .timeout(Duration::from_secs(60))
+            .await
+            .collect::<Vec<Arc<ReactionAction>>>()
+            .await;
+
+        let result_map: HashMap<ReactionType, i32> = reacts
+            .into_iter()
+            .filter_map(|a| match *a {
+                ReactionAction::Added(ref react) => Some((**react).clone()),
+                ReactionAction::Removed(_) => None,
+            })
+            .fold(HashMap::new(), |mut map, reaction| {
+                map.insert(
+                    reaction.emoji.clone(),
+                    *map.get(&reaction.emoji).unwrap_or(&0) + 1,
+                );
+                map
+            });
+
+        let (dead_index, (_, &highest)) = result_map
+            .iter()
+            .enumerate()
+            .max_by_key(|(_, (_, &b))| b)
+            .ok_or(MyError)?;
+        let number_of_highest = result_map.iter().filter(|(_, &num)| num == highest).count();
+
+        if number_of_highest > 1 {
+            msg.channel_id
+                .say(&ctx.http, format!("C'è stato un pareggio, nessuno muore"))
+                .await?;
+        } else {
+            let target = players.get(dead_index).unwrap();
+            let (killed_id, killed_player) = {
+                let mut game_writer = game.write().await;
+                let killed_id = game_writer.vote_kill_loop(target.0.to_owned())?;
+                let player = game_writer
+                    .get_player(&killed_id)
+                    .ok_or(MyError)?
+                    .to_owned();
+
+                (killed_id, player)
+            };
+
+            let killed_tag = self.get_tag_from_id(&killed_id).ok_or(MyError)?;
+
+            msg.channel_id
+                .say(&ctx.http, format!("E'morto {}", killed_tag))
+                .await?;
+
+            let game_reader = game.read().await;
+            let maybe_player = game_reader
+                .get_alive_players()
+                .find(|(_, player)| matches!(player.role(), &LupusRole::MEDIUM))
+                .map(|(uid, _)| uid);
+
+            if let Some(player) = maybe_player {
+                let ch = player.create_dm_channel(&ctx.http).await?;
+                ch.say(
+                    &ctx.http,
+                    format!(
+                        "fra vedi che il tizio morto era {:?}",
+                        killed_player.get_nature()
+                    ),
+                )
+                .await?;
+            }
+        }
+
+        game.read().await.day_end().await;
+
+        Ok(())
     }
 
     pub async fn handle_night(&self, guild_id: &GuildId, ctx: &Context, msg: &Message) {
@@ -95,7 +224,12 @@ impl LupusManager {
             game_writer.set_phase(GamePhase::DAY);
         }
         let game_read = game.read().await;
-        game_read.check_if_ended().await;
+
+        if game_read.check_if_ended().await {
+            let _ = game_read.game_end().await;
+        } else {
+            let _ = game_read.night_end().await;
+        }
     }
 
     pub async fn handle_day(&self, guild_id: &GuildId, ctx: &Context) {
@@ -272,13 +406,35 @@ impl LupusManager {
 
         return None;
     }
+
+    fn get_vote_emojis() -> Vec<ReactionType> {
+        vec![
+            ReactionType::Unicode(ONE.into()),
+            ReactionType::Unicode(TWO.into()),
+            ReactionType::Unicode(THREE.into()),
+            ReactionType::Unicode(FOUR.into()),
+            ReactionType::Unicode(FIVE.into()),
+            ReactionType::Unicode(SIX.into()),
+            ReactionType::Unicode(SEVEN.into()),
+            ReactionType::Unicode(EIGHT.into()),
+            ReactionType::Unicode(NINE.into()),
+            ReactionType::Unicode(TEN.into()),
+            ReactionType::Unicode(ELEVEN.into()),
+            ReactionType::Unicode(TWELVE.into()),
+            ReactionType::Unicode(THIRTEEN.into()),
+            ReactionType::Unicode(FOURTEEN.into()),
+            ReactionType::Unicode(FIFTEEN.into()),
+            ReactionType::Unicode(SIXTEEN.into()),
+        ]
+    }
 }
 
 #[derive(Clone, Debug)]
 pub enum GameMessage {
     // Chiamato quando tutti hanno fatto un'azione
-    NIGHTEND,
+    HANDLENIGHT,
     // Chiamato a fine voto
-    DAYEND,
+    HANDLEDAY,
+    HANDLEVOTATION,
     GAMEEND,
 }

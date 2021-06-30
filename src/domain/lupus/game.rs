@@ -1,7 +1,7 @@
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
-use std::convert::TryInto;
 use tokio::sync::mpsc::error::SendError;
 use tokio::sync::mpsc::Sender;
 use tracing::info;
@@ -17,7 +17,6 @@ pub enum GamePhase {
     FIRSTNIGHT,
     NIGHT,
     DAY,
-    VOTAZIONE,
 }
 
 #[derive(Debug)]
@@ -51,8 +50,8 @@ impl LupusGame {
         self.joined_players.iter().filter(|(_, p)| p.alive())
     }
 
-    pub fn get_alive_players_count(&self) -> usize {
-        self.get_alive_players().count().try_into().unwrap()
+    pub fn clone_players(&self) -> HashMap<UserId, LupusPlayer, RandomState> {
+        self.joined_players.clone()
     }
 
     pub fn get_player(&self, player_id: &UserId) -> Option<&LupusPlayer> {
@@ -73,15 +72,19 @@ impl LupusGame {
             .map(|(uid, _)| uid);
 
         if required_uids.all(|uid| self.action_buffer.iter().any(|(auid, _)| *auid == *uid)) {
-            let _ = self.message_sender.send(GameMessage::NIGHTEND).await;
+            let _ = self.message_sender.send(GameMessage::HANDLENIGHT).await;
         }
     }
 
     pub async fn day_end(&self) {
         let has_ended = self.check_if_ended().await;
         if !has_ended {
-            let _ = self.message_sender.send(GameMessage::DAYEND).await;
+            let _ = self.message_sender.send(GameMessage::HANDLEDAY).await;
         }
+    }
+
+    pub async fn night_end(&self) -> Result<(), SendError<GameMessage>> {
+        self.message_sender.send(GameMessage::HANDLEVOTATION).await
     }
 
     pub async fn game_end(&self) -> Result<(), SendError<GameMessage>> {
@@ -192,10 +195,6 @@ impl LupusGame {
             || bad_players_count == 0
             || (bad_players_count >= 1 && good_players_count <= 1)
         {
-            let result = self.game_end().await;
-            if let Err(_err) = result {
-                println!("Non sono riuscito a terminare il game con successo");
-            }
             true
         } else {
             false

@@ -9,7 +9,7 @@ mod stop;
 
 use action::{
     frame::*, frame_and_kill::*, givepicture::*, heal::*, kill::*, pass::*, possess::*, protect::*,
-    roleblock::*, shoot::*, start_vote::*, truesight::*, wolfvote::*,
+    roleblock::*, shoot::*, truesight::*, wolfvote::*,
 };
 use create::*;
 use join::*;
@@ -26,7 +26,6 @@ use serenity::framework::standard::macros::group;
 #[commands(
     roleblock,
     shoot,
-    start_vote,
     truesight,
     wolfvote,
     leave,

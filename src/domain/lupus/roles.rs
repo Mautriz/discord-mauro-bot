@@ -105,7 +105,6 @@ impl LupusRole {
         info!("can action fase: {:?}", phase);
         match phase {
             GamePhase::DAY => false,
-            GamePhase::VOTAZIONE => false,
             GamePhase::FIRSTNIGHT => self.can_action_fist_night(),
             GamePhase::NIGHT => self.can_action_night(),
         }
