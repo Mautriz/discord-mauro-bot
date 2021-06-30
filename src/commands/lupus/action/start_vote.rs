@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -46,6 +47,8 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
                 ),
             )
             .await?;
+
+        return Ok(());
     }
 
     let number_of_player_alive = game.read().await.get_alive_players_count();
@@ -63,7 +66,7 @@ pub async fn start_vote(ctx: &Context, msg: &Message, mut args: Args) -> Command
 
     let reacts = sent_msg
         .await_reactions(ctx)
-        .collect_limit(number_of_player_alive.into())
+        .collect_limit(number_of_player_alive.try_into().unwrap())
         .timeout(Duration::from_secs(60))
         .await
         .collect::<Vec<Arc<ReactionAction>>>()

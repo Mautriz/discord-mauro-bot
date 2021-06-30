@@ -51,7 +51,7 @@ impl LupusGame {
         self.joined_players.iter().filter(|(_, p)| p.alive())
     }
 
-    pub fn get_alive_players_count(&self) -> u32 {
+    pub fn get_alive_players_count(&self) -> usize {
         self.get_alive_players().count().try_into().unwrap()
     }
 

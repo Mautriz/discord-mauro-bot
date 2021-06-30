@@ -23,7 +23,7 @@ use std::{collections::HashSet, env, sync::Arc};
 use tracing::{error, info, Level};
 use tracing_subscriber;
 
-use commands::{invito::*, lupus::*, ping::*, random::*, suona::*, vote::*};
+use commands::{builder_test::*, invito::*, lupus::*, ping::*, random::*, suona::*, vote::*};
 
 use crate::domain::lupus::context::{LupusCtx, LupusManager};
 
@@ -60,7 +60,7 @@ async fn my_help(
 }
 
 #[group]
-#[commands(ping, invito, random, vote, suona)]
+#[commands(ping, invito, random, vote, suona, builder_test)]
 struct General;
 
 #[tokio::main]
