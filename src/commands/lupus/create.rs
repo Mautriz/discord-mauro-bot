@@ -30,7 +30,6 @@ pub async fn create(ctx: &Context, msg: &Message, mut _args: Args) -> CommandRes
         .await?;
 
     while let Some(game_message) = rx.recv().await {
-        println!("msg: {:?}", game_message.clone());
         match game_message {
             GameMessage::HANDLENIGHT => {
                 let lupus = data.lupus().await;

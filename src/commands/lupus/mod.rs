@@ -3,7 +3,7 @@ mod create;
 mod join;
 mod leave;
 mod ls;
-mod start_game;
+mod start;
 mod stats;
 mod stop;
 
@@ -15,7 +15,7 @@ use create::*;
 use join::*;
 use leave::*;
 use ls::*;
-use start_game::*;
+use start::*;
 use stats::*;
 use stop::*;
 
@@ -37,7 +37,7 @@ use serenity::framework::standard::macros::group;
     kill,
     pass,
     possess,
-    start_game,
+    start,
     stop,
     join,
     ls,
