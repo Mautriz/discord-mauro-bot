@@ -8,6 +8,7 @@ use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::futures::StreamExt;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
+use serenity::utils::MessageBuilder;
 use tracing::info;
 
 use crate::consts::*;
@@ -69,23 +70,19 @@ pub async fn builder_test(ctx: &Context, msg: &Message, mut args: Args) -> Comma
     //         .await?;
 
     //     return Ok(());
-    // }
+
+    // MessageBuilder::new().
+    let sent_msg = msg.channel_id.say(&ctx.http, format!("AO")).await?;
 
     let number_of_player_alive: usize = 16; //  game.read().await.get_alive_players_count();
 
-    info!("SONO QUI");
-    let sent_msg = msg.channel_id.say(&ctx.http, format!("AO")).await?;
-
-    info!("SONO QUI");
     // game.write().await.set_phase(GamePhase::VOTAZIONE);
 
-    for i in 0..number_of_player_alive {
-        info!("SONO QUI");
+    for i in 0.. {
         sent_msg
             .react(&ctx.http, num_emojis.get(i).ok_or(MyError)?.to_owned())
             .await?;
     }
-    info!("SONO QUI");
 
     let reacts = sent_msg
         .await_reactions(ctx)
@@ -109,7 +106,16 @@ pub async fn builder_test(ctx: &Context, msg: &Message, mut args: Args) -> Comma
             map
         });
 
-    // let c = result_map.iter().max_by_key(|(_, b)| b).ok_or(MyError)?;
+    let (_, &highest) = result_map.iter().max_by_key(|(_, &b)| b).ok_or(MyError)?;
+    let number_of_highest = result_map.iter().filter(|(_, &num)| num == highest).count();
+
+    if number_of_highest > 1 {
+        let sent_msg = msg
+            .channel_id
+            .say(&ctx.http, format!("C'è stato un pareggio, nessuno muore"))
+            .await?;
+    } else {
+    }
 
     // let yes_count = *result_map
     //     .get(&ReactionType::Unicode(YES_CIRCLE.to_string()))
