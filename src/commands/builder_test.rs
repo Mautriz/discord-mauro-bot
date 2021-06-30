@@ -8,7 +8,6 @@ use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::futures::StreamExt;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
-use serenity::utils::MessageBuilder;
 
 use crate::consts::*;
 use crate::domain::error::MyError;
