@@ -138,7 +138,7 @@ impl LupusManager {
                 map
             });
 
-        let (dead_index, (_, &highest)) = result_map
+        let (dead_index, (reaction, &highest)) = result_map
             .iter()
             .enumerate()
             .max_by_key(|(_, (_, &b))| b)
@@ -150,7 +150,7 @@ impl LupusManager {
                 .say(&ctx.http, format!("C'è stato un pareggio, nessuno muore"))
                 .await?;
         } else {
-            let target = players.get(dead_index).unwrap();
+            let target = players.iter().find(|(_, _, _, r)| matches!(r, reaction));
             let (killed_id, killed_player) = {
                 let mut game_writer = game.write().await;
                 let killed_id = game_writer.vote_kill_loop(target.0.to_owned())?;
