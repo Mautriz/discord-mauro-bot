@@ -2,12 +2,8 @@ use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-use crate::domain::error::MyError;
-
 #[command]
 pub async fn ping(ctx: &Context, msg: &Message, mut _args: Args) -> CommandResult {
-    let url = msg.author.avatar_url().ok_or(MyError)?;
-
     msg.channel_id
         .send_message(&ctx.http, |a| a.tts(true).content("Provaaa"))
         .await?;

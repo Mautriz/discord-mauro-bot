@@ -11,7 +11,6 @@ use serenity::collector::ReactionAction;
 use serenity::framework::standard::CommandResult;
 use serenity::futures::StreamExt;
 use tokio::sync::RwLockWriteGuard;
-use tracing::info;
 
 use super::game::{GamePhase, LupusGame};
 use super::roles::LupusRole;
@@ -119,7 +118,7 @@ impl LupusManager {
         let reacts = sent_msg
             .await_reactions(ctx)
             .collect_limit(number_of_players_alive as u32)
-            .timeout(Duration::from_secs(60))
+            .timeout(Duration::from_secs(120))
             .await
             .collect::<Vec<Arc<ReactionAction>>>()
             .await;
@@ -138,7 +137,7 @@ impl LupusManager {
                 map
             });
 
-        let (dead_index, (reaction, &highest)) = result_map
+        let (_, (reaction, &highest)) = result_map
             .iter()
             .enumerate()
             .max_by_key(|(_, (_, &b))| b)
@@ -150,7 +149,11 @@ impl LupusManager {
                 .say(&ctx.http, format!("C'è stato un pareggio, nessuno muore"))
                 .await?;
         } else {
-            let target = players.iter().find(|(_, _, _, r)| matches!(r, reaction));
+            let target = players
+                .iter()
+                .find(|(_, _, _, r)| *r == reaction)
+                .ok_or(MyError)?;
+
             let (killed_id, killed_player) = {
                 let mut game_writer = game.write().await;
                 let killed_id = game_writer.vote_kill_loop(target.0.to_owned())?;
